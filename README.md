@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# گسترش سیم و کابل مهکام
 
-## Getting Started
+وب‌سایت فارسی RTL برای شرکت گسترش سیم و کابل مهکام — کاتالوگ محصولات، سئو، پنل مدیریت فارسی، و ماژول نرخ دلار/مس/آلومینیوم.
 
-First, run the development server:
+## فناوری‌ها
+
+- Next.js 16 (App Router) + TypeScript
+- PostgreSQL (Railway) + Prisma
+- Auth.js (ورود ادمین)
+- Tailwind CSS 4 — تم شیشه‌ای روشن
+
+## راه‌اندازی محلی
 
 ```bash
+cp .env.example .env.local
+# DATABASE_URL و AUTH_SECRET را پر کنید
+
+npm install
+npm run db:push
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- سایت: http://localhost:3000
+- پنل: http://localhost:3000/admin/login
+- پیش‌فرض ادمین: `admin@mahkam.ir` / `admin123456` (از `.env.local`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## نرخ‌ها
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **زنده:** کارت‌های بک‌آپ از TGJU + لینک به [لایودیتا](https://www.livedata.ir/)
+- **تاریخی دلار:** همگام‌سازی TGJU در `DollarDaily` + جستجوی تاریخ شمسی
 
-## Learn More
+همگام‌سازی دستی:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+curl "http://localhost:3000/api/cron/sync-prices?secret=CRON_SECRET&backfill=1"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+روی Vercel کرون هر ۶ ساعت (`vercel.json`) اجرا می‌شود.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## استقرار
 
-## Deploy on Vercel
+1. پروژه را در Vercel وصل کنید
+2. متغیرهای `.env.example` را در Vercel تنظیم کنید
+3. `CRON_SECRET` را برای کرون تنظیم کنید
+4. پس از دیپلوی: `db:push` و `db:seed` را یک‌بار اجرا کنید
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ساختار
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/(site)` — صفحات عمومی
+- `src/app/(admin)/admin` — پنل فارسی
+- `src/lib/prices/tgju.ts` — همگام‌سازی نرخ
+- `prisma/schema.prisma` — مدل داده

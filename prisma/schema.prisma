@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  nameFa      String
+  slug        String     @unique
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Product {
+  id             String         @id @default(cuid())
+  nameFa         String
+  slug           String         @unique
+  /// Card / SEO summary (optional; falls back to introduction)
+  shortDesc      String?
+  body           String?
+  /// معرفی محصول
+  introduction   String?        @db.Text
+  /// ساختار سیم
+  wireStructure  String?        @db.Text
+  /// مشخصات فنی (متن آزاد؛ جدول کلید/مقدار جدا در specs)
+  techSpecs      String?        @db.Text
+  /// کاربردها
+  applications   String?        @db.Text
+  /// مزایا
+  advantages     String?        @db.Text
+  specs          Json?
+  conductor      String?
+  application    String?
+  seoTitle       String?
+  seoDescription String?
+  isPublished    Boolean        @default(false)
+  isFeatured     Boolean        @default(false)
+  sortOrder      Int            @default(0)
+  categoryId     String?
+  category       Category?      @relation(fields: [categoryId], references: [id])
+  images         ProductImage[]
+  views          ProductView[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@index([conductor])
+  @@index([nameFa])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum ProductViewSource {
+  PAGE
+  CARD
+}
+
+model ProductView {
+  id         String            @id @default(cuid())
+  productId  String
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  viewedAt   DateTime          @default(now())
+  source     ProductViewSource @default(PAGE)
+  visitorKey String?
+  referrer   String?
+
+  @@index([productId, viewedAt])
+  @@index([viewedAt])
+  @@index([productId, source, viewedAt])
+  @@index([productId, visitorKey, source, viewedAt])
+}
+
+model SiteSetting {
+  id           String   @id @default("default")
+  telegramUrl  String   @default("https://t.me/mahkam_cable")
+  phones       String[] @default([])
+  address      String?
+  /// Exact map pin (WGS84)
+  mapLat       Float?
+  mapLng       Float?
+  aboutHtml    String?
+  contactHtml  String?
+  companyBlurb String?
+  updatedAt    DateTime @updatedAt
+}
+
+enum PriceSymbol {
+  USD_RLS
+  COPPER
+  ALUMINUM
+}
+
+model PriceSnapshot {
+  id         String      @id @default(cuid())
+  symbol     PriceSymbol
+  source     String
+  value      Float
+  unit       String
+  observedAt DateTime    @default(now())
+
+  @@index([symbol, observedAt])
+}
+
+model DollarDaily {
+  id         String   @id @default(cuid())
+  date       DateTime @unique @db.Date
+  dateJalali String
+  open       Float?
+  high       Float?
+  low        Float?
+  close      Float
+  source     String   @default("tgju")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([dateJalali])
+}
