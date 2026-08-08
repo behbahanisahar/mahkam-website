@@ -4,8 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { TelegramIcon } from "@/components/site/TelegramIcon";
 
 export const HERO_IMAGES = {
-  factoryDesk: "/images/section-hero.webp",
-  factoryMobile: "/images/section-hero.webp",
+  factoryDesk: "/images/hero-business.webp",
+  factoryMobile: "/images/hero-business.webp",
   crossSection: "/images/section-cable-cross.jpg",
   conduit: "/images/section-conduit.jpg",
   cool: "/images/section-infra.jpg",
@@ -17,21 +17,21 @@ type Props = {
 
 export function HeroSection({ telegramUrl }: Props) {
   return (
-    <section className="relative isolate overflow-hidden bg-ink text-white">
+    <section className="relative isolate overflow-hidden bg-[#dce8f5] text-white">
       <div className="absolute inset-0">
         <Image
           src={HERO_IMAGES.factoryDesk}
-          alt="برش مقطعی سیم و کابل صنعتی مهکام"
+          alt="مجموعه صنعتی و تجاری مهکام"
           fill
           priority
           fetchPriority="high"
-          quality={85}
-          className="hero-kenburns object-cover object-[58%_45%]"
+          quality={90}
+          className="object-cover object-center"
           sizes="100vw"
         />
-        {/* Stronger scrim — hero art is light pastel blue */}
-        <div className="absolute inset-0 bg-gradient-to-l from-ink/85 via-ink/55 to-ink/25" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/15 to-ink/35" />
+        {/* Soft text-side fade — keep the bright facility photo visible */}
+        <div className="absolute inset-0 bg-gradient-to-l from-ink/50 via-ink/12 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/15 via-transparent to-transparent" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[480px] max-w-7xl flex-col justify-center px-4 pb-12 pt-28 sm:min-h-[540px] sm:px-6 sm:pb-14 sm:pt-32 lg:min-h-[600px] lg:px-8 lg:pb-16 lg:pt-36">
