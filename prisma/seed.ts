@@ -7,8 +7,26 @@ const PLACEHOLDER =
   "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80";
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    if (process.env.ALLOW_PRODUCTION_SEED !== "YES_I_UNDERSTAND") {
+      console.error(
+        "Refusing to seed: NODE_ENV=production. " +
+          "This script upserts admin password and demo catalog data. " +
+          "Set ALLOW_PRODUCTION_SEED=YES_I_UNDERSTAND only for intentional bootstrap.",
+      );
+      process.exit(1);
+    }
+  }
+
   const email = (process.env.ADMIN_EMAIL ?? "admin@mahkam.ir").toLowerCase();
-  const password = process.env.ADMIN_PASSWORD ?? "admin123456";
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password || password.length < 12) {
+    console.error(
+      "Refusing to seed: set ADMIN_PASSWORD to a strong password (min 12 chars). " +
+        "No default production/dev password is applied.",
+    );
+    process.exit(1);
+  }
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.upsert({
@@ -316,7 +334,8 @@ async function main() {
   });
 
   console.log("Seed complete.");
-  console.log(`Admin: ${email} / ${password}`);
+  console.log(`Admin email: ${email}`);
+  console.log("Admin password: (the ADMIN_PASSWORD you provided — not printed)");
 }
 
 main()

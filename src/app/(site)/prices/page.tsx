@@ -9,6 +9,8 @@ import { prisma, withDbTimeout } from "@/lib/prisma";
 import { formatNumberFa, formatRial, toPersianDigits } from "@/lib/i18n/fa";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getSiteSettings } from "@/lib/settings";
+import { getLiveDataRates } from "@/lib/prices/livedata";
+import { snapshotsAsLiveDataFallback } from "@/lib/prices/snapshots";
 
 export const metadata: Metadata = {
   title: "نرخ دلار، مس و آلومینیوم",
@@ -81,11 +83,18 @@ async function RecentDollarArchive() {
 }
 
 export default async function PricesPage() {
-  const settings = await getSiteSettings();
+  const [settings, liveRates] = await Promise.all([
+    getSiteSettings(),
+    getLiveDataRates().catch(() => ({ rates: [], fetchedAt: new Date().toISOString() })),
+  ]);
+  const initialPrices =
+    liveRates.rates.length > 0
+      ? liveRates
+      : ((await snapshotsAsLiveDataFallback().catch(() => null)) ?? liveRates);
 
   return (
     <div className="space-y-0">
-      <LivePricesStrip showDetailsLink={false} />
+      <LivePricesStrip initial={initialPrices} showDetailsLink={false} />
 
       <SiteContainer className="space-y-8 py-10 sm:py-12 lg:py-14">
         <div className="flex flex-col gap-4 rounded-3xl border border-ink/8 bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">

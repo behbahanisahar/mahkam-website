@@ -62,6 +62,7 @@ export function HomeAboutSection({ blurb }: Props) {
                   alt="کنترل کیفیت و مشخصات فنی در مهکام"
                   fill
                   priority
+                  quality={75}
                   className="object-cover object-[50%_22%]"
                   sizes="(max-width:1024px) 100vw, 42vw"
                 />

@@ -1,14 +1,9 @@
 import { getSiteSettings } from "@/lib/settings";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "گسترش سیم و کابل مهکام";
-
-function absoluteUrl(path: string) {
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
-}
+import { absoluteUrl, getSiteName, getSiteUrl } from "@/lib/site";
 
 export function OrganizationJsonLd() {
+  const siteUrl = getSiteUrl();
+  const siteName = getSiteName();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -31,6 +26,8 @@ export function OrganizationJsonLd() {
 
 /** LocalBusiness + geo for Google Maps / local SEO */
 export async function LocalBusinessJsonLd() {
+  const siteUrl = getSiteUrl();
+  const siteName = getSiteName();
   const settings = await getSiteSettings();
   const phones = settings.phones.length > 0 ? settings.phones : ["02166349014"];
   const address =
@@ -95,6 +92,8 @@ export async function LocalBusinessJsonLd() {
 }
 
 export function WebSiteJsonLd() {
+  const siteUrl = getSiteUrl();
+  const siteName = getSiteName();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",

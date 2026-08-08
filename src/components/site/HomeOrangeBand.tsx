@@ -15,6 +15,7 @@ export function HomeOrangeBand({ telegramUrl }: Props) {
           src="/images/section-infra.jpg"
           alt="زیرساخت و نصب کابل صنعتی"
           fill
+          quality={75}
           wrapperClassName="absolute inset-0"
           className="object-cover"
           sizes="(max-width:1024px) 100vw, 50vw"

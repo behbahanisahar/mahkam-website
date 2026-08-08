@@ -5,6 +5,7 @@ import "./globals.css";
 import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/OrganizationJsonLd";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { getSiteName, getSiteUrl } from "@/lib/site";
 
 const shabnam = localFont({
   src: [
@@ -20,8 +21,8 @@ const shabnam = localFont({
   fallback: ["Tahoma", "Arial", "sans-serif"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "گسترش سیم و کابل مهکام";
+const siteUrl = getSiteUrl();
+const siteName = getSiteName();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

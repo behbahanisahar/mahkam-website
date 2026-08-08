@@ -69,27 +69,3 @@ export const getCachedCategories = unstable_cache(
   ["product-categories-v5"],
   { revalidate: REVALIDATE.categories, tags: [CACHE_TAGS.categories] },
 );
-
-export async function getCategoryTiles() {
-  try {
-    const cats = await getCachedCategories();
-    return cats
-      .map((c) => {
-        const childCount = c.children.reduce((sum, ch) => sum + ch._count.products, 0);
-        const imageUrl =
-          c.products[0]?.images[0]?.url ??
-          c.children.find((ch) => ch.products[0]?.images[0]?.url)?.products[0]?.images[0]?.url ??
-          null;
-        return {
-          slug: c.slug,
-          nameFa: c.nameFa,
-          description: c.description,
-          productCount: c._count.products + childCount,
-          imageUrl,
-        };
-      })
-      .filter((c) => c.productCount > 0);
-  } catch {
-    return [];
-  }
-}

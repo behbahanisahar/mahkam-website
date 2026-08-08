@@ -10,6 +10,7 @@ import { AuthError } from "next-auth";
 import { CACHE_TAGS } from "@/lib/cache";
 import { fetchTgjuDollarHistory } from "@/lib/prices/tgju";
 import { toJalaliLabel } from "@/lib/i18n/fa";
+import { maybeDeleteUnreferencedLocalUpload } from "@/lib/uploads";
 
 async function requireAdmin() {
   const session = await auth();
@@ -102,6 +103,11 @@ export async function upsertProductAction(formData: FormData) {
   );
 
   if (imageUrl) {
+    const previous = await prisma.productImage.findMany({
+      where: { productId: product.id },
+      select: { url: true },
+    });
+
     await withDbRetry(async () => {
       await prisma.productImage.deleteMany({ where: { productId: product.id } });
       await prisma.productImage.create({
@@ -113,6 +119,12 @@ export async function upsertProductAction(formData: FormData) {
         },
       });
     });
+
+    for (const old of previous) {
+      if (old.url !== imageUrl) {
+        await maybeDeleteUnreferencedLocalUpload(old.url).catch(() => false);
+      }
+    }
   }
 
   revalidatePath("/products");
@@ -129,7 +141,14 @@ export async function deleteProductAction(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (id) {
+    const images = await prisma.productImage.findMany({
+      where: { productId: id },
+      select: { url: true },
+    });
     await prisma.product.delete({ where: { id } });
+    for (const img of images) {
+      await maybeDeleteUnreferencedLocalUpload(img.url).catch(() => false);
+    }
   }
   revalidatePath("/admin/products");
   revalidatePath("/products");

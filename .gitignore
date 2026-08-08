@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# nested duplicate checkout (not part of deploy)
+/mahkam-website
+
+# local self-hosted uploads (dev default UPLOAD_DIR)
+.data/

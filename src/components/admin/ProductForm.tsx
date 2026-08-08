@@ -187,10 +187,7 @@ export function ProductForm({
       <label className="block text-sm">
         تصویر محصول
         <div className="mt-1">
-          <ImageUrlField
-            defaultValue={product?.imageUrl ?? ""}
-            enableUpload={Boolean(process.env.UPLOADTHING_TOKEN?.trim())}
-          />
+          <ImageUrlField defaultValue={product?.imageUrl ?? ""} />
         </div>
       </label>
 

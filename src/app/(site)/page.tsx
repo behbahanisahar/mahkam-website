@@ -9,15 +9,23 @@ import { ValuesMarquee } from "@/components/site/ValuesMarquee";
 import { WebSiteJsonLd } from "@/components/seo/OrganizationJsonLd";
 import { getSiteSettings } from "@/lib/settings";
 import { getAllTimePopularProducts, getFeaturedProducts } from "@/lib/products/popularity";
+import { getLiveDataRates } from "@/lib/prices/livedata";
+import { snapshotsAsLiveDataFallback } from "@/lib/prices/snapshots";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [settings, popular, featured] = await Promise.all([
+  const [settings, popular, featured, liveRates] = await Promise.all([
     getSiteSettings(),
     getAllTimePopularProducts(6),
     getFeaturedProducts(6),
+    getLiveDataRates().catch(() => ({ rates: [], fetchedAt: new Date().toISOString() })),
   ]);
+
+  const initialPrices =
+    liveRates.rates.length > 0
+      ? liveRates
+      : ((await snapshotsAsLiveDataFallback().catch(() => null)) ?? liveRates);
 
   const products = popular.length > 0 ? popular : featured;
   const subtitle =
@@ -34,7 +42,7 @@ export default async function HomePage() {
       <WebSiteJsonLd />
       <HeroSection telegramUrl={settings.telegramUrl} />
       <HomeAboutSection blurb={blurb} />
-      <LivePricesStrip />
+      <LivePricesStrip initial={initialPrices} />
       <ProductEditorialList
         title="کاتالوگ سیم و کابل"
         subtitle={subtitle}

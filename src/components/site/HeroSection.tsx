@@ -4,8 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { TelegramIcon } from "@/components/site/TelegramIcon";
 
 export const HERO_IMAGES = {
-  factoryDesk: "/images/section-hero.jpg",
-  factoryMobile: "/images/section-hero.jpg",
+  factoryDesk: "/images/section-hero.webp",
+  factoryMobile: "/images/section-hero.webp",
   crossSection: "/images/section-cable-cross.jpg",
   conduit: "/images/section-conduit.jpg",
   cool: "/images/section-infra.jpg",
@@ -21,16 +21,17 @@ export function HeroSection({ telegramUrl }: Props) {
       <div className="absolute inset-0">
         <Image
           src={HERO_IMAGES.factoryDesk}
-          alt="تولید سیم و کابل صنعتی مهکام"
+          alt="برش مقطعی سیم و کابل صنعتی مهکام"
           fill
           priority
           fetchPriority="high"
-          className="hero-kenburns object-cover object-[50%_40%]"
+          quality={85}
+          className="hero-kenburns object-cover object-[58%_45%]"
           sizes="100vw"
         />
-        {/* Soft dark scrim only — no white fade; photo stays vivid */}
-        <div className="absolute inset-0 bg-gradient-to-l from-ink/80 via-ink/45 to-ink/15" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-ink/25" />
+        {/* Stronger scrim — hero art is light pastel blue */}
+        <div className="absolute inset-0 bg-gradient-to-l from-ink/85 via-ink/55 to-ink/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/15 to-ink/35" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[480px] max-w-7xl flex-col justify-center px-4 pb-12 pt-28 sm:min-h-[540px] sm:px-6 sm:pb-14 sm:pt-32 lg:min-h-[600px] lg:px-8 lg:pb-16 lg:pt-36">

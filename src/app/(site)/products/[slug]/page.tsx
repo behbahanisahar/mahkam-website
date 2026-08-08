@@ -9,6 +9,7 @@ import { SiteContainer } from "@/components/site/SiteContainer";
 import { prisma } from "@/lib/prisma";
 import { getPublishedProductBySlug } from "@/lib/products/queries";
 import { getSiteSettings } from "@/lib/settings";
+import { getSiteUrl } from "@/lib/site";
 import { resolveMediaUrl } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -74,7 +75,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const parentCategory = product.category?.parent ?? null;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = getSiteUrl();
   const summary =
     product.shortDesc || product.introduction || product.seoDescription || undefined;
 
