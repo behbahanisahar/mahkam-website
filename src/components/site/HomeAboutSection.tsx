@@ -16,10 +16,10 @@ type Props = {
 
 export function HomeAboutSection({ blurb }: Props) {
   return (
-    <section id="about" className="scroll-mt-24 bg-transparent">
+    <section id="about" className="scroll-mt-24 bg-[#f3f2ef]">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
         <Reveal>
-          <div className="overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-[0_20px_50px_-36px_rgba(15,23,42,0.28)]">
+          <div className="overflow-hidden rounded-[1.75rem] border border-ink/8 bg-white shadow-[0_20px_50px_-36px_rgba(15,23,42,0.28)]">
             <div className="grid lg:grid-cols-12">
               {/* Copy — right in RTL */}
               <div className="flex flex-col justify-center px-5 py-8 sm:px-8 sm:py-10 lg:col-span-7 lg:px-10 lg:py-12">
