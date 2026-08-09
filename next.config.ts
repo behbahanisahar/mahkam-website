@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
-    qualities: [75, 90, 92],
     // Same-origin `/uploads/*` and `/images/*` work without remotePatterns.
     // Keep legacy UploadThing/Unsplash hostnames so existing ProductImage URLs still render.
     remotePatterns: [
