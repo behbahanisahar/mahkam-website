@@ -37,8 +37,10 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHome = pathname === "/";
+  const overlay = isHome && !scrolled;
 
   const openMega = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -55,6 +57,17 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
     setMobileProductsOpen(false);
     setExpandedSlug(null);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isHome) {
+      setScrolled(false);
+      return;
+    }
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -77,18 +90,42 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 w-full border-b border-white/10 bg-ink text-white shadow-lg shadow-black/25 backdrop-blur-md supports-[backdrop-filter]:bg-ink/95">
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 w-full text-white transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
+          overlay
+            ? "border-b border-transparent bg-transparent"
+            : isHome
+              ? "border-b border-white/10 bg-ink/70 shadow-lg shadow-black/20 backdrop-blur-md"
+              : "border-b border-ink/8 bg-white/90 text-ink shadow-sm backdrop-blur-md",
+        )}
+      >
         <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
           <Logo
-            variant="light"
+            variant={isHome ? "light" : "default"}
             className="shrink-0"
             imageClassName="h-9 w-auto max-w-[110px] sm:h-10 sm:max-w-[130px]"
           />
 
-          <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex" aria-label="منوی اصلی">
+          <nav
+            className={cn(
+              "hidden items-center gap-1 lg:flex",
+              isHome ? "ms-auto" : "flex-1 justify-center",
+            )}
+            aria-label="منوی اصلی"
+          >
             {links.map((l) => {
               const active = isActivePath(pathname, l.href);
               const isProducts = "hasMenu" in l && l.hasMenu;
+              const linkTone = isHome
+                ? cn(
+                    "rounded-none bg-transparent px-3 text-white/85 hover:bg-transparent hover:text-white",
+                    (active || (isProducts && megaOpen)) && "text-[#ff6b00]",
+                  )
+                : cn(
+                    "text-ink/60 hover:bg-ink/5 hover:text-ink",
+                    (active || (isProducts && megaOpen)) && "bg-copper/12 text-copper-deep",
+                  );
 
               if (isProducts) {
                 return (
@@ -105,10 +142,7 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
                       aria-expanded={megaOpen}
                       aria-haspopup="menu"
                       onClick={() => setMegaOpen((v) => !v)}
-                      className={cn(
-                        "nav-pill inline-flex items-center gap-1 text-white/75 hover:text-white",
-                        (active || megaOpen) && "nav-pill-active",
-                      )}
+                      className={cn("nav-pill inline-flex items-center gap-1", linkTone)}
                     >
                       {l.label}
                       <ChevronDown
@@ -120,25 +154,18 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
               }
 
               return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={cn(
-                    "nav-pill text-white/70 hover:bg-white/8 hover:text-white",
-                    active && "nav-pill-active",
-                  )}
-                >
+                <Link key={l.href} href={l.href} className={cn("nav-pill", linkTone)}>
                   {l.label}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className={cn("hidden items-center gap-2 lg:flex", isHome && "hidden")}>
             <Link
               href="/products"
               aria-label="جستجوی محصولات"
-              className="inline-flex size-10 items-center justify-center rounded-xl border border-white/15 text-white/75 transition hover:border-copper/50 hover:text-white"
+              className="inline-flex size-10 items-center justify-center rounded-xl border border-ink/12 text-ink/60 transition hover:border-ink/25 hover:text-ink"
             >
               <Search className="size-4" />
             </Link>
@@ -165,7 +192,10 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
             <Link
               href="/products"
               aria-label="محصولات"
-              className="inline-flex size-10 items-center justify-center rounded-xl text-white/85 hover:bg-white/10"
+              className={cn(
+                "inline-flex size-10 items-center justify-center rounded-xl",
+                isHome ? "text-white/85 hover:bg-white/10" : "text-ink/70 hover:bg-ink/5",
+              )}
             >
               <Search className="size-[18px]" />
             </Link>
@@ -174,13 +204,15 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
               aria-label={mobileOpen ? "بستن منو" : "باز کردن منو"}
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((v) => !v)}
-              className="inline-flex size-10 items-center justify-center rounded-xl text-white hover:bg-white/10"
+              className={cn(
+                "inline-flex size-10 items-center justify-center rounded-xl",
+                isHome ? "text-white hover:bg-white/10" : "text-ink hover:bg-ink/5",
+              )}
             >
               {mobileOpen ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
             </button>
           </div>
 
-          {/* Desktop mega drawer */}
           <div
             className="absolute inset-x-0 top-full z-50 hidden lg:block"
             onMouseEnter={openMega}

@@ -555,6 +555,94 @@ select optgroup {
   }
 }
 
+/* —— SHINING-style hero + about —— */
+.shining-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Steep white diagonal cut — skew bar (left high → right low) */
+.shining-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  left: -12%;
+  right: -12%;
+  bottom: -4.5rem;
+  height: 9rem;
+  background: #ffffff;
+  transform: skewY(7deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .shining-hero::after {
+    bottom: -5.5rem;
+    height: 11rem;
+    transform: skewY(8deg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .shining-hero::after {
+    bottom: -7rem;
+    height: 14rem;
+    transform: skewY(9deg);
+  }
+}
+
+.shining-about {
+  position: relative;
+  z-index: 2;
+  margin-top: -1px;
+  background: #ffffff;
+}
+
+@media (min-width: 1024px) {
+  .shining-about {
+    /* Photo pulls up over the diagonal into the hero */
+  }
+}
+
+.shining-about-frame {
+  position: relative;
+  padding-top: 0.75rem;
+  padding-inline-start: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .shining-about-frame {
+    margin-top: -8rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .shining-about-frame {
+    margin-top: -10rem;
+  }
+}
+
+.shining-about-frame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: min(55%, 11rem);
+  height: 3px;
+  background: #ff6b00;
+}
+
+.shining-about-frame::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  height: min(45%, 10rem);
+  background: #ff6b00;
+}
+
 
 
 
