@@ -1,0 +1,42 @@
+name: Deploy Mahkam Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+
+            cd /var/www/mahkam-website
+
+            echo "Starting deployment..."
+
+            docker compose down
+
+            docker compose build --no-cache
+
+            docker compose up -d
+
+            echo "Waiting for container..."
+
+            sleep 5
+
+            docker ps
+
+            echo "Deployment completed."
