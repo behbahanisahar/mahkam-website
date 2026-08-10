@@ -1,4 +1,5 @@
 import { FileText, Layers, ListChecks, Sparkles, Wrench } from "lucide-react";
+import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 export type ProductDetailSections = {
   introduction?: string | null;
@@ -60,9 +61,11 @@ export function ProductDetailContent({ product }: { product: ProductDetailSectio
             <Icon className="size-4 shrink-0" aria-hidden />
             {title}
           </h2>
-          <div className="px-4 py-4 text-sm leading-8 whitespace-pre-wrap text-ink sm:px-5 sm:text-[15px]">
-            {text}
-          </div>
+          <LtrAwareText
+            as="div"
+            text={text}
+            className="px-4 py-4 text-sm leading-8 whitespace-pre-wrap text-ink sm:px-5 sm:text-[15px]"
+          />
         </section>
       ))}
     </div>

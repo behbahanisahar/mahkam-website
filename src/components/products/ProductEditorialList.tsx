@@ -7,6 +7,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { formatNumberFa } from "@/lib/i18n/fa";
 import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
+import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 type Props = {
   title: string;
@@ -94,7 +95,7 @@ export function ProductEditorialList({ title, subtitle, products, emptyMessage }
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <h3 className="truncate text-[15px] font-bold text-ink transition group-hover:text-copper sm:text-base">
-                            {product.nameFa}
+                            <LtrAwareText text={product.nameFa} />
                           </h3>
                           {product.conductor ? (
                             <span className="rounded-full border border-ink/8 bg-white px-2 py-0.5 text-[10px] font-semibold text-ink/55">

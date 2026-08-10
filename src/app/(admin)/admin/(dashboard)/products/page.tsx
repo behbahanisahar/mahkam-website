@@ -6,6 +6,7 @@ import { deleteProductAction } from "@/lib/actions/admin";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AdminDbNotice } from "@/components/admin/AdminDbNotice";
 import { shouldBypassImageOptimizer } from "@/lib/utils";
+import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 function loadProducts() {
   return prisma.product.findMany({
@@ -72,7 +73,9 @@ export default async function AdminProductsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h2 className="truncate font-semibold">{p.nameFa}</h2>
+                        <h2 className="truncate font-semibold">
+                          <LtrAwareText text={p.nameFa} />
+                        </h2>
                         {p.isPublished ? (
                           <span className="shrink-0 rounded-lg bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-800">
                             منتشر
@@ -140,7 +143,9 @@ export default async function AdminProductsPage() {
                               />
                             ) : null}
                           </div>
-                          <span className="font-medium">{p.nameFa}</span>
+                          <span className="font-medium">
+                            <LtrAwareText text={p.nameFa} />
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted">{p.category?.nameFa ?? "—"}</td>

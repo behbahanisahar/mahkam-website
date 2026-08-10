@@ -11,6 +11,7 @@ import { getPublishedProductBySlug } from "@/lib/products/queries";
 import { getSiteSettings } from "@/lib/settings";
 import { getSiteUrl } from "@/lib/site";
 import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
+import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -197,7 +198,9 @@ export default async function ProductDetailPage({ params }: Props) {
           </>
         ) : null}
         <span className="mx-2">/</span>
-        <span>{product.nameFa}</span>
+        <span>
+          <LtrAwareText text={product.nameFa} />
+        </span>
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -239,9 +242,17 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
 
         <div>
-          <h1 className="brand-display text-3xl font-bold leading-tight text-ink">{product.nameFa}</h1>
+          <LtrAwareText
+            as="h1"
+            text={product.nameFa}
+            className="brand-display text-3xl font-bold leading-tight text-ink"
+          />
           {summary ? (
-            <p className="mt-4 line-clamp-4 text-sm leading-8 text-muted sm:text-base">{summary}</p>
+            <LtrAwareText
+              as="p"
+              text={summary}
+              className="mt-4 line-clamp-4 text-sm leading-8 text-muted sm:text-base"
+            />
           ) : null}
 
           <div className="mt-5 flex flex-wrap gap-2">
@@ -252,11 +263,6 @@ export default async function ProductDetailPage({ params }: Props) {
               >
                 {product.category.nameFa}
               </Link>
-            ) : null}
-            {product.conductor ? (
-              <span className="rounded-full bg-bg-alt px-3.5 py-1.5 text-xs font-medium text-ink">
-                هادی: {product.conductor}
-              </span>
             ) : null}
           </div>
 
@@ -269,25 +275,6 @@ export default async function ProductDetailPage({ params }: Props) {
             <Send className="size-4" />
             دریافت قیمت از تلگرام
           </a>
-
-          {Object.keys(specs).length > 0 ? (
-            <div className="ui-card mt-8 overflow-hidden">
-              <h2 className="border-b border-glass-border bg-bg-alt/60 px-4 py-3 text-sm font-semibold text-copper-deep">
-                جدول مشخصات
-              </h2>
-              <dl>
-                {Object.entries(specs).map(([k, v]) => (
-                  <div
-                    key={k}
-                    className="grid grid-cols-2 gap-2 border-t border-glass-border/60 px-4 py-2.5 text-sm"
-                  >
-                    <dt className="text-muted">{k}</dt>
-                    <dd className="font-medium">{String(v)}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ) : null}
         </div>
       </div>
 

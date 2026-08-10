@@ -3,6 +3,7 @@ import { formatNumberFa } from "@/lib/i18n/fa";
 import { ProductCardLink } from "@/components/products/ProductCardLink";
 import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
 import { LazyImage } from "@/components/ui/LazyImage";
+import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 export type ProductCardData = {
   slug: string;
@@ -55,7 +56,11 @@ export function ProductCard({
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 border-t border-ink/6 px-4 py-4">
-        <h3 className="text-sm font-bold leading-6 text-ink">{product.nameFa}</h3>
+        <LtrAwareText
+          as="h3"
+          text={product.nameFa}
+          className="text-sm font-bold leading-6 text-ink"
+        />
         <span className="mt-auto text-xs font-semibold text-copper">مشاهده ←</span>
       </div>
     </ProductCardLink>

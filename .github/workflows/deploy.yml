@@ -38,7 +38,10 @@ jobs:
 
             echo "Waiting for container..."
 
-            sleep 5
+            sleep 8
+
+            echo "Syncing افشان catalog..."
+            docker exec mahkam-website node scripts/sync-afshan-catalog.mjs || echo "WARN: catalog sync failed — check DATABASE_URL / pg_hba"
 
             docker ps
 

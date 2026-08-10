@@ -45,55 +45,35 @@ export async function upsertProductAction(formData: FormData) {
   const nameFa = String(formData.get("nameFa") ?? "").trim();
   const slugRaw = String(formData.get("slug") ?? "").trim();
   const slug = slugRaw || slugifyPersian(nameFa) || `product-${Date.now()}`;
-  const shortDesc = String(formData.get("shortDesc") ?? "") || null;
   const introduction = String(formData.get("introduction") ?? "") || null;
   const wireStructure = String(formData.get("wireStructure") ?? "") || null;
   const techSpecs = String(formData.get("techSpecs") ?? "") || null;
   const applications = String(formData.get("applications") ?? "") || null;
   const advantages = String(formData.get("advantages") ?? "") || null;
-  const conductor = String(formData.get("conductor") ?? "") || null;
   const categoryId = String(formData.get("categoryId") ?? "") || null;
-  const seoTitle = String(formData.get("seoTitle") ?? "") || null;
-  const seoDescription = String(formData.get("seoDescription") ?? "") || null;
   const isPublished = formData.get("isPublished") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   const sortOrder = Number(formData.get("sortOrder") ?? 0) || 0;
   const imageUrl = String(formData.get("imageUrl") ?? "").trim();
-  const specsRaw = String(formData.get("specs") ?? "").trim();
 
-  let specs: Record<string, string> | undefined;
-  if (specsRaw) {
-    try {
-      specs = JSON.parse(specsRaw) as Record<string, string>;
-    } catch {
-      specs = {};
-      for (const line of specsRaw.split("\n")) {
-        const [k, ...rest] = line.split(":");
-        if (k && rest.length) specs[k.trim()] = rest.join(":").trim();
-      }
-    }
+  if (!nameFa) {
+    redirect("/admin/products/new?error=name");
   }
 
   const data = {
     nameFa,
     slug,
-    shortDesc,
     introduction,
     wireStructure,
     techSpecs,
     applications,
     advantages,
-    // keep application in sync with first line of applications for filters/chips
     application: applications?.split("\n").find((l) => l.trim())?.trim() ?? null,
     body: introduction,
-    conductor,
     categoryId,
-    seoTitle,
-    seoDescription,
     isPublished,
     isFeatured,
     sortOrder,
-    specs: specs ?? undefined,
   };
 
   const product = await withDbRetry(() =>

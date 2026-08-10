@@ -13,8 +13,19 @@ const credentialsSchema = z.object({
 /** Keep admin logged in for 30 days */
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
 
+const authSecret =
+  process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
+
+if (process.env.NODE_ENV === "production" && !authSecret) {
+  console.error(
+    "[auth] Missing AUTH_SECRET (or NEXTAUTH_SECRET). Admin login will fail with a server configuration error.",
+  );
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  // Required in production — encrypts JWTs/cookies. Prefer AUTH_SECRET.
+  secret: authSecret,
   session: {
     strategy: "jwt",
     maxAge: SESSION_MAX_AGE,

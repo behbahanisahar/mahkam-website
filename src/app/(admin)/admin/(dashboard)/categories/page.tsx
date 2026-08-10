@@ -27,7 +27,7 @@ export default async function AdminCategoriesPage() {
       <div>
         <h1 className="brand-display text-2xl font-bold">دسته‌بندی‌ها</h1>
         <p className="mt-1 text-sm text-muted">
-          دسته والد (مثل سیم افشان) و در صورت نیاز زیردسته؛ سایزها به‌صورت محصول ثبت می‌شوند.
+          دسته والد مثل «سیم افشان»، زیردسته مثل «سیم ارت افشان»؛ هر سایز به‌صورت یک محصول با تصویر ثبت می‌شود.
         </p>
       </div>
 
