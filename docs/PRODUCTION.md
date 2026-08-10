@@ -37,21 +37,20 @@ Critical keys:
 
 Repo root: `Dockerfile`, `docker-compose.yml`.
 
+Production Compose uses **`network_mode: host`** so the app reaches Postgres at `127.0.0.1:5432` (same as the VPS). Set:
+
+```bash
+DATABASE_URL="postgresql://saharbehbahani:PASSWORD@127.0.0.1:5432/mahkam?schema=public"
+```
+
 ```bash
 cd /var/www/mahkam-website
 # .env must exist here (secrets)
 docker compose down
 docker compose build --no-cache
 docker compose up -d
+docker exec mahkam-website node scripts/sync-afshan-catalog.mjs
 ```
-
-Compose:
-
-- Loads `.env` into the container (`DATABASE_URL`, `AUTH_SECRET`, …)
-- Forces `UPLOAD_DIR=/var/www/mahkam-uploads`
-- Bind-mounts `/var/www/mahkam-uploads:/var/www/mahkam-uploads`
-
-GitHub Actions deploy (push to `main`) SSHs to the VPS, `git reset --hard origin/main`, then runs the Compose commands above.
 
 ## Self-hosted product uploads
 
