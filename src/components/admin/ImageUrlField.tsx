@@ -4,6 +4,12 @@ import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import Image from "next/image";
 import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ALLOWED_IMAGE_ACCEPT,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_MB,
+  formatBytesFa,
+} from "@/lib/uploads-shared";
 
 type Props = {
   defaultValue?: string;
@@ -13,11 +19,31 @@ export function ImageUrlField({ defaultValue = "" }: Props) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function uploadFile(file: File) {
     setError(null);
+    setInfo(null);
+
+    if (!file.type || !ALLOWED_IMAGE_ACCEPT.split(",").includes(file.type)) {
+      setError("فقط JPEG، PNG، WebP یا AVIF مجاز است");
+      return;
+    }
+
+    if (file.size <= 0) {
+      setError("فایل خالی است");
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(
+        `حجم فایل زیاد است (${formatBytesFa(file.size)}). حداکثر ${MAX_UPLOAD_MB} مگابایت`,
+      );
+      return;
+    }
+
     setUploading(true);
     try {
       const body = new FormData();
@@ -26,11 +52,24 @@ export function ImageUrlField({ defaultValue = "" }: Props) {
         method: "POST",
         body,
       });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+        bytes?: number;
+        width?: number;
+        height?: number;
+      };
       if (!res.ok || !data.url) {
         throw new Error(data.error || "آپلود ناموفق بود");
       }
       setUrl(data.url);
+      if (data.bytes && data.width && data.height) {
+        setInfo(
+          `بهینه‌سازی شد: ${data.width}×${data.height} — ${formatBytesFa(data.bytes)} (WebP)`,
+        );
+      } else {
+        setInfo("تصویر آپلود و بهینه شد");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "آپلود ناموفق بود");
     } finally {
@@ -102,6 +141,7 @@ export function ImageUrlField({ defaultValue = "" }: Props) {
                   onClick={() => {
                     setUrl("");
                     setError(null);
+                    setInfo(null);
                   }}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-glass-border px-3 py-2 text-xs font-medium text-ink hover:bg-bg-alt disabled:opacity-60"
                 >
@@ -126,14 +166,18 @@ export function ImageUrlField({ defaultValue = "" }: Props) {
             <span className="font-medium text-ink">
               {uploading ? "در حال آپلود و بهینه‌سازی…" : "آپلود تصویر محصول"}
             </span>
-            <span className="text-xs">کشیدن و رها کردن یا انتخاب فایل — JPEG / PNG / WebP / AVIF تا ۵ مگابایت</span>
+            <span className="max-w-xs text-center text-xs leading-5">
+              کشیدن و رها کردن یا انتخاب فایل — JPEG / PNG / WebP / AVIF
+              <br />
+              حداکثر {MAX_UPLOAD_MB} مگابایت؛ بعد از آپلود به WebP بهینه می‌شود
+            </span>
           </button>
         )}
 
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
+          accept={ALLOWED_IMAGE_ACCEPT}
           className="hidden"
           onChange={onFileChange}
         />
@@ -146,13 +190,15 @@ export function ImageUrlField({ defaultValue = "" }: Props) {
           onChange={(e) => {
             setUrl(e.target.value);
             setError(null);
+            setInfo(null);
           }}
-          placeholder="/uploads/products/… یا https://…"
+          placeholder="/uploads/products/… یا /images/catalog/… یا https://…"
           className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2 text-sm text-ink"
           dir="ltr"
         />
       </label>
 
+      {info ? <p className="text-xs text-copper-deep">{info}</p> : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );

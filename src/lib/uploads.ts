@@ -3,12 +3,16 @@ import { mkdir, unlink, writeFile, access } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
+import {
+  MAX_IMAGE_EDGE,
+  MAX_UPLOAD_BYTES,
+  WEBP_QUALITY,
+} from "@/lib/uploads-shared";
+
+export { MAX_IMAGE_EDGE, MAX_UPLOAD_BYTES, WEBP_QUALITY } from "@/lib/uploads-shared";
 
 export const UPLOAD_PUBLIC_PREFIX = "/uploads";
 export const PRODUCT_UPLOAD_SUBDIR = "products";
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-export const MAX_IMAGE_EDGE = 2000;
-export const WEBP_QUALITY = 80;
 
 const ALLOWED_MIME = new Set([
   "image/jpeg",

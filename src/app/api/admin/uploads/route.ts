@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: "File too large (max 5 MB)" }, { status: 413 });
+    return NextResponse.json(
+      { error: `File too large (max ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB)` },
+      { status: 413 },
+    );
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest) {
             : code === "unsupported_extension"
               ? "Invalid file extension"
               : code === "too_large"
-                ? "File too large (max 5 MB)"
+                ? `File too large (max ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB)`
                 : "Upload failed",
       },
       { status },
