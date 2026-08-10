@@ -9,7 +9,7 @@ Internet
   ↓
 Nginx
   ├── /uploads/*  → alias /var/www/mahkam-uploads/*
-  └── everything else → Next.js :3000 (PM2)
+  └── everything else → Next.js :3000 (Docker Compose)
 ```
 
 ## Product uploads (add to the live .com server block now)
@@ -50,19 +50,19 @@ sudo chmod 755 /var/www/mahkam-uploads /var/www/mahkam-uploads/products
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## Phase A (current) — keep .com working
+## Phase A (current) — keep live host working
 
-Serve the Next.js app (PM2 on port 3000) for `mahkamcable.com` / `www.mahkamcable.com` with existing SSL.
+Serve the Next.js app (Docker on port 3000) for the active domain with existing SSL.
 
-Do **not** add `.com` → `.ir` redirects yet.
+Do **not** add `.com` → `.ir` redirects until DNS + cert for `.ir` are ready.
 
-Add the `/uploads/` location above to the current `.com` config.
+Add the `/uploads/` location above to the current HTTPS server block.
 
 ## Phase B (when .ir A-record → 85.208.255.211 and cert issued)
 
 1. Issue cert for `mahkamcable.ir` and `www.mahkamcable.ir` (certbot).
 2. Switch app env to `https://mahkamcable.ir`.
-3. Rebuild/restart PM2.
+3. Rebuild/restart Docker: `cd /var/www/mahkam-website && docker compose up -d --build`
 4. Enable the redirect server blocks below (include the same `/uploads/` location on the primary host).
 5. Verify Search Console property for `.ir`.
 

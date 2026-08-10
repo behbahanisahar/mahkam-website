@@ -6,7 +6,7 @@ import type { ProductCardData } from "@/components/products/ProductCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { formatNumberFa } from "@/lib/i18n/fa";
-import { resolveMediaUrl } from "@/lib/utils";
+import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
 
 type Props = {
   title: string;
@@ -70,6 +70,7 @@ export function ProductEditorialList({ title, subtitle, products, emptyMessage }
                               alt={img?.alt ?? product.nameFa}
                               fill
                               priority={index < 2}
+                              unoptimized={shouldBypassImageOptimizer(src)}
                               className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
                               sizes="80px"
                             />

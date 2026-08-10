@@ -15,6 +15,24 @@ export function resolveMediaUrl(
   return url;
 }
 
+/**
+ * VPS uploads live under UPLOAD_DIR (outside `public/`), so the Next.js
+ * image optimizer cannot read them as local files. Serve as-is (Nginx or
+ * `/uploads` route already caches aggressively).
+ */
+export function shouldBypassImageOptimizer(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    if (url.startsWith("/uploads/")) return true;
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return new URL(url).pathname.startsWith("/uploads/");
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export function slugifyPersian(input: string): string {
   return input
     .trim()

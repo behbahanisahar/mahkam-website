@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import {
   MAX_UPLOAD_BYTES,
+  isAllowedImageExtension,
   isAllowedImageMime,
   saveProductImageBuffer,
 } from "@/lib/uploads";
@@ -34,6 +35,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!isAllowedImageExtension(file.name)) {
+    return NextResponse.json(
+      { error: "Invalid file extension. Use .jpg, .jpeg, .png, .webp, or .avif" },
+      { status: 415 },
+    );
+  }
+
   if (file.size <= 0) {
     return NextResponse.json({ error: "Empty file" }, { status: 400 });
   }
@@ -45,7 +53,7 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   try {
-    const saved = await saveProductImageBuffer(buffer, file.type);
+    const saved = await saveProductImageBuffer(buffer, file.type, file.name);
     return NextResponse.json({
       url: saved.url,
       width: saved.width,
@@ -57,7 +65,10 @@ export async function POST(req: NextRequest) {
     const status =
       code === "too_large"
         ? 413
-        : code === "unsupported_type" || code === "invalid_image" || code === "empty_file"
+        : code === "unsupported_type" ||
+            code === "unsupported_extension" ||
+            code === "invalid_image" ||
+            code === "empty_file"
           ? 400
           : 500;
     return NextResponse.json(
@@ -65,9 +76,11 @@ export async function POST(req: NextRequest) {
         error:
           code === "invalid_image"
             ? "File is not a valid image"
-            : code === "too_large"
-              ? "File too large (max 5 MB)"
-              : "Upload failed",
+            : code === "unsupported_extension"
+              ? "Invalid file extension"
+              : code === "too_large"
+                ? "File too large (max 5 MB)"
+                : "Upload failed",
       },
       { status },
     );

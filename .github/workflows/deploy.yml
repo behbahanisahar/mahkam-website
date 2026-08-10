@@ -27,6 +27,9 @@ jobs:
 
             echo "Starting deployment..."
 
+            git fetch origin main
+            git reset --hard origin/main
+
             docker compose down
 
             docker compose build --no-cache

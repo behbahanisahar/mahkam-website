@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export const UPLOAD_PUBLIC_PREFIX = "/uploads";
 export const PRODUCT_UPLOAD_SUBDIR = "products";
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-export const MAX_IMAGE_WIDTH = 2000;
+export const MAX_IMAGE_EDGE = 2000;
 export const WEBP_QUALITY = 80;
 
 const ALLOWED_MIME = new Set([
@@ -17,6 +17,8 @@ const ALLOWED_MIME = new Set([
   "image/webp",
   "image/avif",
 ]);
+
+const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 
 /** Persistent upload root — never under `.next` or git-tracked `public/`. */
 export function getUploadRoot(): string {
@@ -36,6 +38,15 @@ export function toPublicUploadUrl(subdir: string, filename: string): string {
 export function isAllowedImageMime(mime: string | null | undefined): boolean {
   if (!mime) return false;
   return ALLOWED_MIME.has(mime.toLowerCase());
+}
+
+/** Client filename extension check (never used for storage name). */
+export function isAllowedImageExtension(filename: string | null | undefined): boolean {
+  if (!filename) return false;
+  const base = path.basename(filename);
+  if (!base || base === "." || base.includes("\0")) return false;
+  const ext = path.extname(base).toLowerCase();
+  return ALLOWED_EXT.has(ext);
 }
 
 /** Extract `/uploads/...` pathname from relative or absolute URL. */
@@ -96,9 +107,13 @@ export type SavedProductImage = {
 export async function saveProductImageBuffer(
   input: Buffer,
   declaredMime: string | null,
+  originalFilename?: string | null,
 ): Promise<SavedProductImage> {
   if (!isAllowedImageMime(declaredMime)) {
     throw new Error("unsupported_type");
+  }
+  if (originalFilename && !isAllowedImageExtension(originalFilename)) {
+    throw new Error("unsupported_extension");
   }
   if (input.byteLength === 0) throw new Error("empty_file");
   if (input.byteLength > MAX_UPLOAD_BYTES) throw new Error("too_large");
@@ -115,7 +130,9 @@ export async function saveProductImageBuffer(
   const optimized = await sharp(input, { failOn: "error" })
     .rotate()
     .resize({
-      width: MAX_IMAGE_WIDTH,
+      width: MAX_IMAGE_EDGE,
+      height: MAX_IMAGE_EDGE,
+      fit: "inside",
       withoutEnlargement: true,
     })
     .webp({ quality: WEBP_QUALITY, effort: 4 })
@@ -141,12 +158,7 @@ export async function maybeDeleteUnreferencedLocalUpload(url: string): Promise<b
 
   const refs = await prisma.productImage.count({
     where: {
-      OR: [
-        { url },
-        { url: pathname },
-        // absolute URLs that end with the same path
-        { url: { endsWith: pathname } },
-      ],
+      OR: [{ url }, { url: pathname }, { url: { endsWith: pathname } }],
     },
   });
   if (refs > 0) return false;

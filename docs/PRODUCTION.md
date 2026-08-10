@@ -1,30 +1,57 @@
-# Production operations (Ubuntu VPS + Nginx + PM2)
+# Production operations (Ubuntu VPS + Nginx + Docker)
 
 ## Domains
 
 | Domain | Role |
 |---|---|
-| `https://mahkamcable.com` | Current live site — **do not break** |
-| `https://mahkamcable.ir` | Intended primary/canonical after DNS + SSL |
+| `https://mahkamcable.com` | Legacy live host if still in use |
+| `https://mahkamcable.ir` | Intended primary/canonical |
 
-Until `.ir` points to `85.208.255.211` and a certificate exists:
+Set both `NEXT_PUBLIC_SITE_URL` and `NEXTAUTH_URL` to the public origin that Nginx serves (currently intended: `https://mahkamcable.ir`).
 
-1. Keep `NEXT_PUBLIC_SITE_URL=https://mahkamcable.com`
-2. Keep `NEXTAUTH_URL=https://mahkamcable.com`
-3. Do **not** enable `.com` → `.ir` redirects in Nginx
+## Architecture
 
-When ready to cut over: see `docs/nginx/` and switch both env vars to `https://mahkamcable.ir`.
+```text
+Internet → Nginx
+  ├── /uploads/*  → alias /var/www/mahkam-uploads/
+  └── /*          → Docker container :3000 (Next.js)
+
+PostgreSQL on the VPS host (not in Compose)
+  ← container via DATABASE_URL …@172.17.0.1:5432/mahkam
+```
 
 ## Required environment variables
 
-See `.env.example`. Critical production keys:
+See `.env.example`. Keep a real `.env` only on the VPS at `/var/www/mahkam-website/.env` (never commit).
 
-- `DATABASE_URL` — Postgres on the VPS
+Critical keys:
+
+- `DATABASE_URL` — host Postgres from the container, e.g. `…@172.17.0.1:5432/mahkam`
 - `AUTH_SECRET` — long random secret
 - `NEXTAUTH_URL` — public origin
-- `NEXT_PUBLIC_SITE_URL` — same public origin (canonical/SEO)
+- `NEXT_PUBLIC_SITE_URL` — same public origin (canonical/SEO; also a Docker **build** arg)
 - `CRON_SECRET` — protect `/api/cron/sync-prices`
-- `UPLOAD_DIR` — persistent product uploads, e.g. `/var/www/mahkam-uploads`
+- `UPLOAD_DIR=/var/www/mahkam-uploads`
+
+## Docker Compose
+
+Repo root: `Dockerfile`, `docker-compose.yml`.
+
+```bash
+cd /var/www/mahkam-website
+# .env must exist here (secrets)
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+Compose:
+
+- Loads `.env` into the container (`DATABASE_URL`, `AUTH_SECRET`, …)
+- Forces `UPLOAD_DIR=/var/www/mahkam-uploads`
+- Bind-mounts `/var/www/mahkam-uploads:/var/www/mahkam-uploads`
+
+GitHub Actions deploy (push to `main`) SSHs to the VPS, `git reset --hard origin/main`, then runs the Compose commands above.
 
 ## Self-hosted product uploads
 
@@ -32,16 +59,11 @@ Uploads are **not** stored in Git, `.next`, or `public/`.
 
 ```bash
 sudo mkdir -p /var/www/mahkam-uploads/products
-# App user must write; Nginx must read. Adjust users to match your VPS.
-sudo chown -R deploy:www-data /var/www/mahkam-uploads
+# Container process must write; Nginx must read.
+# If the container runs as root, root ownership on the host dir is fine:
+sudo chown -R root:www-data /var/www/mahkam-uploads
 sudo find /var/www/mahkam-uploads -type d -exec chmod 755 {} \;
 sudo find /var/www/mahkam-uploads -type f -exec chmod 644 {} \;
-```
-
-In the app `.env` (not committed):
-
-```bash
-UPLOAD_DIR="/var/www/mahkam-uploads"
 ```
 
 Admin uploads via `POST /api/admin/uploads` (session required). Files are optimized with Sharp to WebP and saved as:
@@ -52,7 +74,7 @@ Public URL stored in `ProductImage.url`:
 
 `/uploads/products/{uuid}.webp`
 
-Nginx serves `/uploads/` directly (see `docs/nginx/README.md`). Do **not** use `chmod 777`.
+Nginx should serve `/uploads/` directly (see `docs/nginx/README.md`). Next.js also has a safe fallback route at `src/app/uploads/[...path]/route.ts`. Do **not** use `chmod 777`.
 
 ### Upload backups
 
@@ -66,31 +88,13 @@ find /var/backups/mahkam -maxdepth 1 -type d -name 'uploads-*' -mtime +14 -exec 
 
 Existing `ProductImage.url` values (UploadThing CDN, Unsplash, `/images/...`) are **left untouched**. They keep working until an admin replaces the image. There is **no automatic migration or deletion** of remote CDN files.
 
-## PM2
-
-Typical process:
-
-```bash
-npm ci
-npx prisma generate
-npx prisma db push   # only when schema changed; never migrate reset / never seed on prod
-npm run build
-pm2 start npm --name mahkam -- start
-pm2 save
-pm2 startup
-```
-
-App must survive: `pm2 restart mahkam`, server reboot (with `pm2 startup`), fresh `npm ci` + `build`. Uploaded files under `UPLOAD_DIR` survive all of these.
-
 ## Cron (VPS — not Vercel)
 
 `vercel.json` crons do **nothing** on this VPS. Use system cron or systemd timer:
 
 ```cron
-0 6 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" "https://mahkamcable.com/api/cron/sync-prices" >/tmp/mahkam-cron.log 2>&1
+0 6 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" "https://mahkamcable.ir/api/cron/sync-prices" >/tmp/mahkam-cron.log 2>&1
 ```
-
-After domain cutover, change the hostname to `mahkamcable.ir`.
 
 ## Database backups
 

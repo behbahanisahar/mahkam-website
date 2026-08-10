@@ -2,12 +2,10 @@
 
 import Image, { type ImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, shouldBypassImageOptimizer } from "@/lib/utils";
 
 type Props = Omit<ImageProps, "onLoad"> & {
-  /** Extra class for the wrapper */
   wrapperClassName?: string;
-  /** Show shimmer skeleton until loaded + in view */
   skeletonClassName?: string;
 };
 
@@ -21,11 +19,16 @@ export function LazyImage({
   skeletonClassName,
   alt,
   priority,
+  unoptimized,
+  src,
   ...props
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(Boolean(priority));
   const [loaded, setLoaded] = useState(false);
+  const bypass =
+    Boolean(unoptimized) ||
+    (typeof src === "string" && shouldBypassImageOptimizer(src));
 
   useEffect(() => {
     if (priority) return;
@@ -56,8 +59,10 @@ export function LazyImage({
       {inView ? (
         <Image
           {...props}
+          src={src}
           alt={alt}
           priority={priority}
+          unoptimized={bypass}
           onLoad={() => setLoaded(true)}
           className={cn(
             "transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",

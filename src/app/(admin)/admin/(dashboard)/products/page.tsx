@@ -5,6 +5,7 @@ import { prisma, withDbTimeout } from "@/lib/prisma";
 import { deleteProductAction } from "@/lib/actions/admin";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AdminDbNotice } from "@/components/admin/AdminDbNotice";
+import { shouldBypassImageOptimizer } from "@/lib/utils";
 
 function loadProducts() {
   return prisma.product.findMany({
@@ -59,7 +60,14 @@ export default async function AdminProductsPage() {
                   <div className="flex gap-3 p-3">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-accent/15">
                       {img ? (
-                        <Image src={img.url} alt={p.nameFa} fill className="object-cover" sizes="64px" />
+                        <Image
+                          src={img.url}
+                          alt={p.nameFa}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                          unoptimized={shouldBypassImageOptimizer(img.url)}
+                        />
                       ) : null}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -122,7 +130,14 @@ export default async function AdminProductsPage() {
                         <div className="flex items-center gap-3">
                           <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-accent/15">
                             {img ? (
-                              <Image src={img.url} alt={p.nameFa} fill className="object-cover" sizes="44px" />
+                              <Image
+                                src={img.url}
+                                alt={p.nameFa}
+                                fill
+                                className="object-cover"
+                                sizes="44px"
+                                unoptimized={shouldBypassImageOptimizer(img.url)}
+                              />
                             ) : null}
                           </div>
                           <span className="font-medium">{p.nameFa}</span>

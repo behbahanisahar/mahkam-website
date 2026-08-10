@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { formatNumberFa } from "@/lib/i18n/fa";
 import { ProductCardLink } from "@/components/products/ProductCardLink";
-import { resolveMediaUrl } from "@/lib/utils";
+import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
 import { LazyImage } from "@/components/ui/LazyImage";
 
 export type ProductCardData = {
@@ -21,6 +21,7 @@ export function ProductCard({
 }) {
   const img = product.images?.[0];
   const src = img ? resolveMediaUrl(img.url) : null;
+  const unoptimized = shouldBypassImageOptimizer(src);
 
   return (
     <ProductCardLink
@@ -35,6 +36,7 @@ export function ProductCard({
               alt={img?.alt ?? product.nameFa}
               fill
               priority
+              unoptimized={unoptimized}
               className="object-contain p-4 transition duration-500 group-hover:scale-[1.04]"
               sizes="(max-width:768px) 50vw, 25vw"
             />

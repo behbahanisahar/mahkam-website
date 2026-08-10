@@ -1,0 +1,29 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Inlined into the Next.js client bundle at build time
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://mahkamcable.ir}
+        NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-گسترش سیم و کابل مهکام}
+        NEXT_PUBLIC_HERO_IMAGE: ${NEXT_PUBLIC_HERO_IMAGE:-/images/hero-minimal.webp}
+        # Used only during image build for SSG/sitemap (from host `.env`)
+        DATABASE_URL: ${DATABASE_URL}
+    container_name: mahkam-website
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Ensure uploads always hit the VPS bind mount (not a container-only path)
+      UPLOAD_DIR: /var/www/mahkam-uploads
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    volumes:
+      # Persistent product images on the VPS host — survives rebuild/recreate
+      - /var/www/mahkam-uploads:/var/www/mahkam-uploads
+    # Postgres runs on the VPS host; container reaches it via Docker bridge gateway.
+    # DATABASE_URL must use 172.17.0.1:5432 (set in `.env` — never commit secrets).

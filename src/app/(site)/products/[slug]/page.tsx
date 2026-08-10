@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublishedProductBySlug } from "@/lib/products/queries";
 import { getSiteSettings } from "@/lib/settings";
 import { getSiteUrl } from "@/lib/site";
-import { resolveMediaUrl } from "@/lib/utils";
+import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -211,6 +211,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 className="object-cover"
                 sizes="(max-width:1024px) 100vw, 50vw"
                 priority
+                unoptimized={shouldBypassImageOptimizer(product.images[0].url)}
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-bg-alt text-sm text-muted">
@@ -229,6 +230,7 @@ export default async function ProductDetailPage({ params }: Props) {
                     loading="lazy"
                     className="object-cover"
                     sizes="120px"
+                    unoptimized={shouldBypassImageOptimizer(img.url)}
                   />
                 </div>
               ))}
