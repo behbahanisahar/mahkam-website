@@ -21,28 +21,53 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            set -e
+            set -euo pipefail
 
-            cd /var/www/mahkam-website
+            APP_DIR="/var/www/mahkam-website"
+            REPO_SSH="git@github.com:behbahanisahar/mahkam-website.git"
+            REPO_HTTPS="https://github.com/behbahanisahar/mahkam-website.git"
 
+            mkdir -p /var/www
+            cd /var/www
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "No git repo at $APP_DIR — cloning fresh..."
+              if [ -d "$APP_DIR" ]; then
+                ts=$(date +%F-%H%M%S)
+                if [ -f "$APP_DIR/.env" ]; then
+                  cp -a "$APP_DIR/.env" "/root/mahkam.env.bak.$ts"
+                  echo "Saved .env to /root/mahkam.env.bak.$ts"
+                fi
+                mv "$APP_DIR" "${APP_DIR}.bak.$ts"
+              fi
+              if git clone "$REPO_SSH" mahkam-website; then
+                echo "Cloned via SSH"
+              else
+                echo "SSH clone failed; trying HTTPS..."
+                git clone "$REPO_HTTPS" mahkam-website
+              fi
+              if [ -f /root/mahkam.env.bak.* ]; then
+                latest=$(ls -1t /root/mahkam.env.bak.* | head -1)
+                cp -a "$latest" "$APP_DIR/.env"
+                echo "Restored .env from $latest"
+              fi
+            fi
+
+            cd "$APP_DIR"
             echo "Starting deployment..."
 
             git fetch origin main
             git reset --hard origin/main
 
             docker compose down
-
             docker compose build --no-cache
-
             docker compose up -d
 
             echo "Waiting for container..."
-
             sleep 8
 
             echo "Syncing افشان catalog..."
             docker exec mahkam-website node scripts/sync-afshan-catalog.mjs || echo "WARN: catalog sync failed — check DATABASE_URL / pg_hba"
 
             docker ps
-
             echo "Deployment completed."
