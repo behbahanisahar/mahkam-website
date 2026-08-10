@@ -2,9 +2,15 @@ import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Keep Western digits / size patterns (e.g. 0.75×1, 450/750) LTR inside RTL UI.
+ * Keep size / voltage patterns LTR inside RTL UI.
+ * Supports Western and Persian digits, e.g. 1×0.75 or ۱×۰.۷۵
+ * (cores × cross-section — same order as written, not reversed).
  */
-const LTR_RUN = /(\d+(?:\.\d+)?(?:\s*[×xX\/]\s*\d+(?:\.\d+)?)*)/g;
+const DIGIT = "[0-9۰-۹]";
+const LTR_RUN = new RegExp(
+  `((?:${DIGIT}+(?:\\.${DIGIT}+)?)(?:\\s*[×xX\\/]\\s*(?:${DIGIT}+(?:\\.${DIGIT}+)?))+)`,
+  "g",
+);
 
 export function LtrAwareText({
   text,

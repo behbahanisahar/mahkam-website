@@ -36,14 +36,14 @@ export function ProductForm({
       <label className="block text-sm">
         نام محصول
         <span className="mt-0.5 block text-xs text-muted">
-          مثل سند کاتالوگ: سیم افشان 0.75×1 — اعداد از چپ به راست نمایش داده می‌شوند
+          مثل کاتالوگ: سیم افشان ۱×۰.۷۵ (تعداد رشته × سطح مقطع) — نه ۰.۷۵×۱
         </span>
         <input
           name="nameFa"
           required
           defaultValue={product?.nameFa ?? ""}
-          placeholder="سیم افشان 0.75×1"
-          dir="auto"
+          placeholder="سیم افشان ۱×۰.۷۵"
+          dir="rtl"
           className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
         />
       </label>
