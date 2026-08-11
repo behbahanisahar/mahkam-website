@@ -17,16 +17,18 @@ export function resolveMediaUrl(
 
 /**
  * VPS uploads live under UPLOAD_DIR (outside `public/`), so the Next.js
- * image optimizer cannot read them as local files. Serve as-is (Nginx or
- * `/uploads` route already caches aggressively).
+ * image optimizer cannot read them as local files. Catalog AI photos also
+ * bypass the optimizer so deploys are not stuck on a stale `/_next/image` cache.
  */
 export function shouldBypassImageOptimizer(url: string | null | undefined): boolean {
   if (!url) return false;
   try {
-    if (url.startsWith("/uploads/")) return true;
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return new URL(url).pathname.startsWith("/uploads/");
-    }
+    const path =
+      url.startsWith("http://") || url.startsWith("https://")
+        ? new URL(url).pathname
+        : url.split("?")[0] ?? url;
+    if (path.startsWith("/uploads/")) return true;
+    if (path.startsWith("/images/catalog/")) return true;
   } catch {
     return false;
   }

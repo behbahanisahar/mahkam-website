@@ -36,13 +36,13 @@ export function ProductForm({
       <label className="block text-sm">
         نام محصول
         <span className="mt-0.5 block text-xs text-muted">
-          مثل کاتالوگ: سیم افشان ۱×۰.۷۵ (تعداد رشته × سطح مقطع) — نه ۰.۷۵×۱
+          دقیقاً مثل کاتالوگ ورد: سیم افشان 0.75×1
         </span>
         <input
           name="nameFa"
           required
           defaultValue={product?.nameFa ?? ""}
-          placeholder="سیم افشان ۱×۰.۷۵"
+          placeholder="سیم افشان 0.75×1"
           dir="rtl"
           className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
         />
