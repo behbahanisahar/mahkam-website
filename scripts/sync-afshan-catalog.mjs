@@ -53,6 +53,8 @@ async function main() {
     const categoryId = p.isEarth ? earth.id : parent.id;
     const imageUrl = p.imagePath || `/images/catalog/${p.slug}.webp`;
 
+    // Word visual titles are cores×section (1×0.75). Clear stale SEO/short
+    // overrides that still had flipped sizes (۰.۷۵×۱) from earlier imports.
     const product = await prisma.product.upsert({
       where: { slug: p.slug },
       create: {
@@ -65,6 +67,9 @@ async function main() {
         advantages: p.advantages || null,
         body: p.introduction || null,
         application: (p.applications || "").split("\n").find((l) => l.trim())?.trim() || null,
+        shortDesc: null,
+        seoTitle: null,
+        seoDescription: null,
         conductor: "مس",
         categoryId,
         isPublished: true,
@@ -80,6 +85,9 @@ async function main() {
         advantages: p.advantages || null,
         body: p.introduction || null,
         application: (p.applications || "").split("\n").find((l) => l.trim())?.trim() || null,
+        shortDesc: null,
+        seoTitle: null,
+        seoDescription: null,
         conductor: "مس",
         categoryId,
         isPublished: true,
