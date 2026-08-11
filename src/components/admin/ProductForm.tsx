@@ -37,13 +37,13 @@ export function ProductForm({
         <label className="block text-sm">
           نام محصول
           <span className="mt-0.5 block text-xs text-muted">
-            دقیقاً مثل کاتالوگ ورد: سیم افشان 0.75×1 — اعداد از چپ به راست
+            مثل نمایش ورد: سیم افشان 1×0.75 — متن راست‌به‌چپ، عدد چپ‌به‌راست
           </span>
           <input
             name="nameFa"
             required
             defaultValue={product?.nameFa ?? ""}
-            placeholder="سیم افشان 0.75×1"
+            placeholder="سیم افشان 1×0.75"
             dir="rtl"
             className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
           />
