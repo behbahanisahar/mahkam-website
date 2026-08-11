@@ -305,13 +305,12 @@ select optgroup {
   font-weight: 800;
 }
 
-/* Cable sizes like 1×0.75: LTR island inside RTL titles */
+/* Cable sizes like 1×0.75: LTR island inside RTL titles (Word visual) */
 .cable-size {
   direction: ltr !important;
   unicode-bidi: isolate !important;
-  display: inline-block;
+  display: inline;
   white-space: nowrap;
-  text-align: left;
 }
 
 .link-arrow {

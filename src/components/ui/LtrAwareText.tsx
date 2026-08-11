@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
  * Product / catalog titles in RTL UI:
  * - Persian words flow right-to-left
  * - Cable sizes like 1×0.75 stay left-to-right (never flip to 0.75×1)
+ *
+ * Matches Word’s on-screen reading: RTL Persian + LTR cores×section.
  */
 const DIGIT = "[0-9۰-۹]";
 const SIZE_PATTERN = new RegExp(
@@ -12,10 +14,16 @@ const SIZE_PATTERN = new RegExp(
   "g",
 );
 
+/** LRI … PDI — stronger than CSS alone against parent RTL embedding */
+const LRI = "\u2066";
+const PDI = "\u2069";
+
 function LtrSize({ children }: { children: string }) {
   return (
     <span dir="ltr" className="cable-size">
+      {LRI}
       {children}
+      {PDI}
     </span>
   );
 }
