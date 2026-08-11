@@ -1,24 +1,107 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Prisma } from "@prisma/client";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { prisma, withDbTimeout } from "@/lib/prisma";
 import { deleteProductAction } from "@/lib/actions/admin";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AdminDbNotice } from "@/components/admin/AdminDbNotice";
+import { AdminImageDownloadButton } from "@/components/admin/AdminImageDownloadButton";
+import { AdminProductSearch } from "@/components/admin/AdminProductSearch";
 import { shouldBypassImageOptimizer } from "@/lib/utils";
 import { LtrAwareText } from "@/components/ui/LtrAwareText";
+import { formatNumberFa } from "@/lib/i18n/fa";
+import { toLatinDigits } from "@/lib/products/cable-title";
 
-function loadProducts() {
-  return prisma.product.findMany({
-    include: { category: true, images: { take: 1, orderBy: { sortOrder: "asc" } } },
-    orderBy: { updatedAt: "desc" },
-  });
+type SearchParams = Promise<{
+  q?: string;
+  category?: string;
+  status?: string;
+}>;
+
+function searchVariants(q: string): string[] {
+  const trimmed = q.trim();
+  if (!trimmed) return [];
+  const latin = toLatinDigits(trimmed);
+  const fa = latin.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]!);
+  return [...new Set([trimmed, latin, fa].filter(Boolean))];
 }
 
-export default async function AdminProductsPage() {
-  const result = await withDbTimeout(loadProducts(), 4_000, null);
+function buildWhere(filters: {
+  q: string;
+  categoryId: string;
+  status: string;
+}): Prisma.ProductWhereInput {
+  const variants = searchVariants(filters.q);
+  const status =
+    filters.status === "published"
+      ? true
+      : filters.status === "draft"
+        ? false
+        : null;
+
+  return {
+    ...(status !== null ? { isPublished: status } : {}),
+    ...(filters.categoryId
+      ? {
+          category: {
+            OR: [{ id: filters.categoryId }, { parentId: filters.categoryId }],
+          },
+        }
+      : {}),
+    ...(variants.length
+      ? {
+          OR: variants.flatMap((v) => [
+            { nameFa: { contains: v, mode: "insensitive" as const } },
+            { slug: { contains: v, mode: "insensitive" as const } },
+            { introduction: { contains: v, mode: "insensitive" as const } },
+            {
+              category: {
+                nameFa: { contains: v, mode: "insensitive" as const },
+              },
+            },
+          ]),
+        }
+      : {}),
+  };
+}
+
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const categoryId = (sp.category ?? "").trim();
+  const status = (sp.status ?? "").trim();
+  const where = buildWhere({ q, categoryId, status });
+  const hasFilters = Boolean(q || categoryId || status);
+
+  const result = await withDbTimeout(
+    Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: true,
+          images: { take: 1, orderBy: { sortOrder: "asc" } },
+        },
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.category.findMany({
+        orderBy: [{ sortOrder: "asc" }, { nameFa: "asc" }],
+        select: { id: true, nameFa: true, parentId: true },
+      }),
+      prisma.product.count(),
+    ]),
+    4_000,
+    null,
+  );
+
   const dbError = result === null;
-  const products = result ?? [];
+  const products = result?.[0] ?? [];
+  const categories = result?.[1] ?? [];
+  const totalAll = result?.[2] ?? 0;
 
   return (
     <div className="space-y-5">
@@ -38,18 +121,58 @@ export default async function AdminProductsPage() {
 
       {dbError ? <AdminDbNotice /> : null}
 
+      {!dbError ? (
+        <AdminProductSearch
+          initialQ={q}
+          initialCategoryId={categoryId}
+          initialStatus={status}
+          categories={categories}
+        />
+      ) : null}
+
+      {!dbError && hasFilters ? (
+        <p className="text-sm text-muted">
+          {formatNumberFa(products.length)} نتیجه
+          {totalAll > 0 ? (
+            <>
+              {" "}
+              از {formatNumberFa(totalAll)} محصول
+            </>
+          ) : null}
+          {q ? (
+            <>
+              {" "}
+              برای «{q}»
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
       {!dbError && products.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-glass-border bg-white/50 px-6 py-14 text-center">
-          <p className="text-sm text-muted">هنوز محصولی ثبت نشده.</p>
-          <Link href="/admin/products/new" className="mt-4 inline-flex text-sm font-medium text-copper hover:underline">
-            اولین محصول را بسازید
-          </Link>
+          <p className="text-sm text-muted">
+            {hasFilters ? "نتیجه‌ای برای این جستجو پیدا نشد." : "هنوز محصولی ثبت نشده."}
+          </p>
+          {hasFilters ? (
+            <Link
+              href="/admin/products"
+              className="mt-4 inline-flex text-sm font-medium text-copper hover:underline"
+            >
+              پاک‌سازی فیلترها
+            </Link>
+          ) : (
+            <Link
+              href="/admin/products/new"
+              className="mt-4 inline-flex text-sm font-medium text-copper hover:underline"
+            >
+              اولین محصول را بسازید
+            </Link>
+          )}
         </div>
       ) : null}
 
       {!dbError && products.length > 0 ? (
         <>
-          {/* Mobile cards */}
           <div className="space-y-3 md:hidden">
             {products.map((p) => {
               const img = p.images[0];
@@ -87,7 +210,7 @@ export default async function AdminProductsPage() {
                         )}
                       </div>
                       <p className="mt-1 text-xs text-muted">{p.category?.nameFa ?? "بدون دسته"}</p>
-                      <div className="mt-3 flex items-center gap-3">
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
                         <Link
                           href={`/admin/products/${p.id}`}
                           className="inline-flex items-center gap-1 text-xs font-medium text-copper"
@@ -95,6 +218,14 @@ export default async function AdminProductsPage() {
                           <Pencil className="size-3.5" />
                           ویرایش
                         </Link>
+                        {img ? (
+                          <AdminImageDownloadButton
+                            url={img.url}
+                            filename={`${p.slug}.webp`}
+                            className="border-0 px-0 py-0 text-xs font-medium text-ink hover:bg-transparent hover:underline"
+                            label="دانلود تصویر"
+                          />
+                        ) : null}
                         <form action={deleteProductAction}>
                           <input type="hidden" name="id" value={p.id} />
                           <SubmitButton
@@ -113,7 +244,6 @@ export default async function AdminProductsPage() {
             })}
           </div>
 
-          {/* Desktop table */}
           <div className="hidden overflow-hidden rounded-2xl border border-glass-border/80 bg-white/70 shadow-sm md:block">
             <table className="w-full text-sm">
               <thead className="bg-copper/10 text-right">
@@ -169,6 +299,14 @@ export default async function AdminProductsPage() {
                             <Pencil className="size-3.5" />
                             ویرایش
                           </Link>
+                          {img ? (
+                            <AdminImageDownloadButton
+                              url={img.url}
+                              filename={`${p.slug}.webp`}
+                              className="border-0 px-0 py-0 text-xs font-medium text-ink hover:bg-transparent hover:underline"
+                              label="دانلود"
+                            />
+                          ) : null}
                           <form action={deleteProductAction}>
                             <input type="hidden" name="id" value={p.id} />
                             <SubmitButton

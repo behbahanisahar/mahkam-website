@@ -10,6 +10,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "catalog:afshan:images": "node scripts/generate-afshan-images.mjs",
+    "catalog:afshan:brand": "node scripts/brand-catalog-images.mjs",
     "catalog:afshan:sync": "node scripts/sync-afshan-catalog.mjs",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"

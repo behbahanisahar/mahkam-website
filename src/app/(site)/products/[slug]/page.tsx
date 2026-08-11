@@ -36,9 +36,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getPublishedProductBySlug(slug);
   if (!product || !product.isPublished) return { title: "محصول یافت نشد" };
 
-  const title = product.seoTitle || product.nameFa;
+  // Prefer live nameFa — stale seoTitle often still had flipped Word sizes
+  const title = product.nameFa;
   const description =
-    product.seoDescription || product.shortDesc || product.introduction || undefined;
+    product.introduction || product.shortDesc || product.seoDescription || undefined;
   const image = product.images[0]?.url;
 
   return {

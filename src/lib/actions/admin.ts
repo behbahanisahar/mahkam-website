@@ -11,6 +11,7 @@ import { CACHE_TAGS } from "@/lib/cache";
 import { fetchTgjuDollarHistory } from "@/lib/prices/tgju";
 import { toJalaliLabel } from "@/lib/i18n/fa";
 import { maybeDeleteUnreferencedLocalUpload } from "@/lib/uploads";
+import { normalizeCableTitle } from "@/lib/products/cable-title";
 
 async function requireAdmin() {
   const session = await auth();
@@ -42,14 +43,19 @@ export async function logoutAction() {
 export async function upsertProductAction(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  const nameFa = String(formData.get("nameFa") ?? "").trim();
+  const nameFa = normalizeCableTitle(String(formData.get("nameFa") ?? "").trim());
   const slugRaw = String(formData.get("slug") ?? "").trim();
   const slug = slugRaw || slugifyPersian(nameFa) || `product-${Date.now()}`;
-  const introduction = String(formData.get("introduction") ?? "") || null;
-  const wireStructure = String(formData.get("wireStructure") ?? "") || null;
-  const techSpecs = String(formData.get("techSpecs") ?? "") || null;
-  const applications = String(formData.get("applications") ?? "") || null;
-  const advantages = String(formData.get("advantages") ?? "") || null;
+  const introduction =
+    normalizeCableTitle(String(formData.get("introduction") ?? "")) || null;
+  const wireStructure =
+    normalizeCableTitle(String(formData.get("wireStructure") ?? "")) || null;
+  const techSpecs =
+    normalizeCableTitle(String(formData.get("techSpecs") ?? "")) || null;
+  const applications =
+    normalizeCableTitle(String(formData.get("applications") ?? "")) || null;
+  const advantages =
+    normalizeCableTitle(String(formData.get("advantages") ?? "")) || null;
   const categoryId = String(formData.get("categoryId") ?? "") || null;
   const isPublished = formData.get("isPublished") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
@@ -70,6 +76,10 @@ export async function upsertProductAction(formData: FormData) {
     advantages,
     application: applications?.split("\n").find((l) => l.trim())?.trim() ?? null,
     body: introduction,
+    // Drop stale SEO overrides that still had flipped sizes (۰.۷۵×۱)
+    seoTitle: null as string | null,
+    seoDescription: null as string | null,
+    shortDesc: null as string | null,
     categoryId,
     isPublished,
     isFeatured,

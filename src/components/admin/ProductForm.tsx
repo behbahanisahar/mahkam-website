@@ -37,7 +37,11 @@ export function ProductForm({
         <label className="block text-sm">
           نام محصول
           <span className="mt-0.5 block text-xs text-muted">
-            مثل نمایش ورد: سیم افشان 1×0.75 — متن راست‌به‌چپ، عدد چپ‌به‌راست
+            ترتیب درست مثل ورد روی صفحه: تعداد رشته × سطح مقطع — مثال{" "}
+            <span dir="ltr" className="cable-size font-semibold text-ink">
+              1×0.75
+            </span>
+            {" "}نه 0.75×1. ذخیره خودکار اصلاح می‌شود.
           </span>
           <input
             name="nameFa"
@@ -47,13 +51,13 @@ export function ProductForm({
             dir="rtl"
             className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
           />
+          {product?.nameFa ? (
+            <p className="mt-2 text-xs text-muted">
+              پیش‌نمایش:{" "}
+              <LtrAwareText text={product.nameFa} className="font-semibold text-ink" />
+            </p>
+          ) : null}
         </label>
-        {product?.nameFa ? (
-          <p className="text-xs text-muted">
-            پیش‌نمایش:{" "}
-            <LtrAwareText text={product.nameFa} className="font-semibold text-ink" />
-          </p>
-        ) : null}
 
       <label className="block text-sm">
         اسلاگ (URL)

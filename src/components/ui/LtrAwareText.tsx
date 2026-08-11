@@ -1,12 +1,12 @@
 import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { normalizeCableTitle } from "@/lib/products/cable-title";
 
 /**
  * Product / catalog titles in RTL UI:
  * - Persian words flow right-to-left
  * - Cable sizes like 1×0.75 stay left-to-right (never flip to 0.75×1)
- *
- * Matches Word’s on-screen reading: RTL Persian + LTR cores×section.
+ * - Word-stored section×1 is normalized to cores×section for display
  */
 const DIGIT = "[0-9۰-۹]";
 const SIZE_PATTERN = new RegExp(
@@ -14,7 +14,6 @@ const SIZE_PATTERN = new RegExp(
   "g",
 );
 
-/** LRI … PDI — stronger than CSS alone against parent RTL embedding */
 const LRI = "\u2066";
 const PDI = "\u2069";
 
@@ -37,28 +36,29 @@ export function LtrAwareText({
   className?: string;
   as?: ElementType;
 }) {
+  const normalized = normalizeCableTitle(text);
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
   const re = new RegExp(SIZE_PATTERN.source, "g");
   let match: RegExpExecArray | null;
 
-  while ((match = re.exec(text)) !== null) {
+  while ((match = re.exec(normalized)) !== null) {
     if (match.index > lastIndex) {
       nodes.push(
-        <span key={`t-${lastIndex}`}>{text.slice(lastIndex, match.index)}</span>,
+        <span key={`t-${lastIndex}`}>{normalized.slice(lastIndex, match.index)}</span>,
       );
     }
     nodes.push(<LtrSize key={`n-${match.index}`}>{match[0]}</LtrSize>);
     lastIndex = match.index + match[0].length;
   }
 
-  if (lastIndex < text.length) {
-    nodes.push(<span key={`t-${lastIndex}`}>{text.slice(lastIndex)}</span>);
+  if (lastIndex < normalized.length) {
+    nodes.push(<span key={`t-${lastIndex}`}>{normalized.slice(lastIndex)}</span>);
   }
 
   return (
     <Comp className={cn(className)} dir="rtl">
-      {nodes.length > 0 ? nodes : text}
+      {nodes.length > 0 ? nodes : normalized}
     </Comp>
   );
 }

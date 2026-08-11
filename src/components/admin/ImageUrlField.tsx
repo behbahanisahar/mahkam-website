@@ -4,6 +4,7 @@ import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import Image from "next/image";
 import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdminImageDownloadButton } from "@/components/admin/AdminImageDownloadButton";
 import {
   ALLOWED_IMAGE_ACCEPT,
   MAX_UPLOAD_BYTES,
@@ -135,6 +136,7 @@ export function ImageUrlField({ defaultValue = "" }: Props) {
                   {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
                   جایگزینی تصویر
                 </button>
+                <AdminImageDownloadButton url={preview} />
                 <button
                   type="button"
                   disabled={uploading}
