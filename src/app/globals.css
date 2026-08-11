@@ -305,6 +305,14 @@ select optgroup {
   font-weight: 800;
 }
 
+/* Cable sizes like 0.75×1 must stay LTR inside RTL pages */
+.cable-size {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .link-arrow {
   display: inline-flex;
   align-items: center;

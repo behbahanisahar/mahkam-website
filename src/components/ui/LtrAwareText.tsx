@@ -2,15 +2,32 @@ import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Keep size / voltage patterns LTR inside RTL UI.
- * Supports Western and Persian digits, e.g. 1×0.75 or ۱×۰.۷۵
- * (cores × cross-section — same order as written, not reversed).
+ * Keep cable sizes / voltages LTR inside RTL UI.
+ * e.g. "سیم افشان 0.75×1" must read 0.75×1 (not 1×0.75).
  */
 const DIGIT = "[0-9۰-۹]";
-const LTR_RUN = new RegExp(
-  `((?:${DIGIT}+(?:\\.${DIGIT}+)?)(?:\\s*[×xX\\/]\\s*(?:${DIGIT}+(?:\\.${DIGIT}+)?))+)`,
+const SIZE_OR_VOLTAGE = new RegExp(
+  `((?:${DIGIT}+(?:\\.${DIGIT}+)?)(?:\\s*[×xX\\/]\\s*(?:${DIGIT}+(?:\\.${DIGIT}+)?))+|${DIGIT}+(?:\\.${DIGIT}+)?\\s*(?:mm²|mm2|م²)?)`,
   "g",
 );
+
+/** Unicode LRI / PDI — strongest isolation for mixed RTL/LTR */
+const LRI = "\u2066";
+const PDI = "\u2069";
+
+function LtrRun({ children }: { children: string }) {
+  return (
+    <span
+      dir="ltr"
+      className="cable-size inline-block whitespace-nowrap"
+      style={{ unicodeBidi: "isolate" }}
+    >
+      {LRI}
+      {children}
+      {PDI}
+    </span>
+  );
+}
 
 export function LtrAwareText({
   text,
@@ -23,7 +40,7 @@ export function LtrAwareText({
 }) {
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
-  const re = new RegExp(LTR_RUN.source, "g");
+  const re = new RegExp(SIZE_OR_VOLTAGE.source, "g");
   let match: RegExpExecArray | null;
 
   while ((match = re.exec(text)) !== null) {
@@ -32,11 +49,7 @@ export function LtrAwareText({
         <span key={`t-${lastIndex}`}>{text.slice(lastIndex, match.index)}</span>,
       );
     }
-    nodes.push(
-      <bdi key={`n-${match.index}`} dir="ltr" className="inline-block whitespace-nowrap">
-        {match[0]}
-      </bdi>,
-    );
+    nodes.push(<LtrRun key={`n-${match.index}`}>{match[0]}</LtrRun>);
     lastIndex = match.index + match[0].length;
   }
 

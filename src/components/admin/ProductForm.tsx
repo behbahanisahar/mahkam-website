@@ -2,6 +2,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 import { upsertProductAction } from "@/lib/actions/admin";
 import { ImageUrlField } from "@/components/admin/ImageUrlField";
 import { CategoryFields, type CategoryOption } from "@/components/admin/CategoryFields";
+import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 type ProductValue = {
   id?: string;
@@ -33,20 +34,26 @@ export function ProductForm({
     >
       {product?.id ? <input type="hidden" name="id" value={product.id} /> : null}
 
-      <label className="block text-sm">
-        نام محصول
-        <span className="mt-0.5 block text-xs text-muted">
-          دقیقاً مثل کاتالوگ ورد: سیم افشان 0.75×1
-        </span>
-        <input
-          name="nameFa"
-          required
-          defaultValue={product?.nameFa ?? ""}
-          placeholder="سیم افشان 0.75×1"
-          dir="rtl"
-          className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
-        />
-      </label>
+        <label className="block text-sm">
+          نام محصول
+          <span className="mt-0.5 block text-xs text-muted">
+            دقیقاً مثل کاتالوگ ورد: سیم افشان 0.75×1 — اعداد از چپ به راست
+          </span>
+          <input
+            name="nameFa"
+            required
+            defaultValue={product?.nameFa ?? ""}
+            placeholder="سیم افشان 0.75×1"
+            dir="rtl"
+            className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
+          />
+        </label>
+        {product?.nameFa ? (
+          <p className="text-xs text-muted">
+            پیش‌نمایش:{" "}
+            <LtrAwareText text={product.nameFa} className="font-semibold text-ink" />
+          </p>
+        ) : null}
 
       <label className="block text-sm">
         اسلاگ (URL)
