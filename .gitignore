@@ -47,3 +47,4 @@ next-env.d.ts
 # local self-hosted uploads (dev default UPLOAD_DIR)
 .data/
 mahkam-deploy.tar.gz
+public/images/catalog-raw/
