@@ -18,9 +18,35 @@ fi
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-echo "→ docker compose build (cached layers) + up"
-docker compose build
-docker compose up -d
+echo "→ docker compose build (old container stays up until swap)"
+if ! docker compose build; then
+  echo "✗ build failed — restarting previous container if any"
+  docker compose up -d || true
+  docker logs mahkam-website --tail 60 2>&1 || true
+  exit 1
+fi
+
+echo "→ docker compose up -d"
+docker compose up -d --remove-orphans
+
+echo "→ wait for app on :3000"
+ok=0
+for i in $(seq 1 20); do
+  code=$(curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/ 2>/dev/null || echo "000")
+  if [[ "$code" == "200" || "$code" == "307" ]]; then
+    echo "✓ app healthy (HTTP $code)"
+    ok=1
+    break
+  fi
+  echo "  attempt $i/20 — HTTP $code"
+  sleep 3
+done
+
+if [[ "$ok" -eq 0 ]]; then
+  echo "✗ app did not respond on :3000"
+  docker logs mahkam-website --tail 80 2>&1 || true
+  exit 1
+fi
 
 if [[ "${1:-}" == "--sync-catalog" ]]; then
   echo "→ sync-afshan-catalog (updates imagePath + product copy in DB)"

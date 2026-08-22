@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -59,7 +60,8 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            bash scripts/deploy/vps-rebuild.sh --sync-catalog
+            chmod +x scripts/deploy/vps-rebuild.sh scripts/deploy/vps-recover.sh
+            bash scripts/deploy/vps-recover.sh
 
             docker ps
             echo "Deployment completed."
