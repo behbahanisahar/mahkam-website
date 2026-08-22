@@ -6,9 +6,15 @@ on:
       - main
   workflow_dispatch:
 
+# Never run two deploys at once (parallel runs caused git/docker lock failures).
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -21,6 +27,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           port: ${{ secrets.DEPLOY_PORT }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 60m
           script: |
             set -euo pipefail
 
@@ -61,7 +68,7 @@ jobs:
             git reset --hard origin/main
 
             chmod +x scripts/deploy/vps-rebuild.sh scripts/deploy/vps-recover.sh
-            bash scripts/deploy/vps-recover.sh
+            bash scripts/deploy/vps-rebuild.sh --sync-catalog
 
             docker ps
             echo "Deployment completed."
