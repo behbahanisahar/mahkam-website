@@ -20,6 +20,7 @@ const assetsDir = path.join(
   ".cursor/projects/Users-saharbehbahani-mahkam/assets",
 );
 const CACHE = "card8";
+const FILLER_CACHE = "card9";
 const W = 1600;
 const H = 1600;
 const FONT =
@@ -49,6 +50,9 @@ const MODEL_SOURCES = {
   "hd-flex-4": "hd-flex-4.png",
   "hd-flex-5": "hd-flex-5.png",
   "hd-flex-3n": "hd-flex-3n.png",
+  "hd-flex-filler-3": "hd-flex-filler-3.png",
+  "hd-flex-filler-3n": "hd-flex-filler-3n.png",
+  "hd-flex-filler-4": "hd-flex-filler-4.png",
 };
 
 /** Products outside afshan/aluminum JSON — mapped from their copy (cores/color). */
@@ -137,7 +141,13 @@ function modelFor(product, kind) {
     if (size.cores === 4) return "hd-alum-4";
     return "hd-alum-5";
   }
-  if (kind === "flex" || kind === "filler") {
+  if (kind === "filler") {
+    if (size.neutral != null || /\+/.test(String(product?.sizeLabel || ""))) return "hd-flex-filler-3n";
+    if (size.cores === 4) return "hd-flex-filler-4";
+    if (size.cores === 3) return "hd-flex-filler-3";
+    return "hd-flex-filler-3";
+  }
+  if (kind === "flex") {
     if (size.neutral != null) return "hd-flex-3n";
     if (size.cores <= 1) return mm >= 50 ? "hd-afshan-black-thick" : "hd-flex-2";
     if (size.cores === 2) return "hd-flex-2";
@@ -253,11 +263,11 @@ async function renderOne(product, kind, modelOverride) {
   return model;
 }
 
-async function loadAndBump(file) {
+async function loadAndBump(file, cache = CACHE) {
   const full = path.join(root, file);
   const data = JSON.parse(await readFile(full, "utf8"));
   for (const p of data) {
-    p.imagePath = `/images/catalog/${p.slug}.webp?v=${CACHE}`;
+    p.imagePath = `/images/catalog/${p.slug}.webp?v=${cache}`;
   }
   await writeFile(full, `${JSON.stringify(data, null, 2)}\n`, "utf8");
   return data;
@@ -288,7 +298,40 @@ async function main() {
   await ensureModels();
   const extrasOnly = process.argv.includes("--extras-only");
   const flexOnly = process.argv.includes("--flex-only");
+  const fillerOnly = process.argv.includes("--filler-only");
   const maftoliOnly = process.argv.includes("--maftoli-only");
+  if (fillerOnly) {
+    const filler = await loadAndBump("prisma/data/flex-filler-catalog.json", FILLER_CACHE);
+    console.log(`→ filled flex copper ${filler.length} (v=${FILLER_CACHE})`);
+    for (const p of filler) {
+      const model = await renderOne(p, "filler");
+      console.log(`  filler ${p.slug}  ${p.sizeLabel}  ${model}`);
+    }
+    const aliases = JSON.parse(
+      await readFile(path.join(root, "prisma/data/prod-flex-aliases.json"), "utf8"),
+    );
+    const fillerSlugs = new Set(filler.map((p) => p.slug));
+    for (const a of aliases) {
+      if (!fillerSlugs.has(a.latinSlug)) continue;
+      a.imagePath = `/images/catalog/${a.latinSlug}.webp?v=${FILLER_CACHE}`;
+      await copyFile(
+        path.join(outDir, `${a.latinSlug}.webp`),
+        path.join(outDir, `${a.prodSlug}.webp`),
+      );
+      await copyFile(
+        path.join(thumbDir, `${a.latinSlug}.webp`),
+        path.join(thumbDir, `${a.prodSlug}.webp`),
+      );
+      console.log(`  alias ${a.prodSlug} ← ${a.latinSlug}`);
+    }
+    await writeFile(
+      path.join(root, "prisma/data/prod-flex-aliases.json"),
+      `${JSON.stringify(aliases, null, 2)}\n`,
+      "utf8",
+    );
+    console.log(`✓ filler catalog ready v=${FILLER_CACHE}`);
+    return;
+  }
   if (maftoliOnly) {
     const maftoli = await loadAndBump("prisma/data/maftoli-catalog.json");
     console.log(`→ solid copper maftoli ${maftoli.length} (v=${CACHE})`);
@@ -335,7 +378,7 @@ async function main() {
   }
   const slugFilter = process.env.CATALOG_SLUGS?.split(",").map((s) => s.trim()).filter(Boolean);
   const flex = await loadAndBump("prisma/data/flex-catalog.json");
-  const filler = await loadAndBump("prisma/data/flex-filler-catalog.json");
+  const filler = await loadAndBump("prisma/data/flex-filler-catalog.json", FILLER_CACHE);
   const flexList = slugFilter ? flex.filter((p) => slugFilter.includes(p.slug)) : flex;
   const fillerList = slugFilter ? filler.filter((p) => slugFilter.includes(p.slug)) : filler;
   console.log(`→ flexible copper ${flexList.length + fillerList.length}`);
@@ -355,7 +398,8 @@ async function main() {
     await readFile(path.join(root, "prisma/data/prod-flex-aliases.json"), "utf8"),
   );
   for (const a of aliases) {
-    a.imagePath = `/images/catalog/${a.latinSlug}.webp?v=${CACHE}`;
+    const cache = a.latinSlug.startsWith("cable-flex-filler") ? FILLER_CACHE : CACHE;
+    a.imagePath = `/images/catalog/${a.latinSlug}.webp?v=${cache}`;
   }
   await writeFile(
     path.join(root, "prisma/data/prod-flex-aliases.json"),
