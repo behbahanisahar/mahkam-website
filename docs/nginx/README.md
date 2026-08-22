@@ -82,14 +82,26 @@ location / {
 }
 
 # Static friendly pages when Next/Docker is down (502/503/504)
+# Copy from docs/nginx/error-pages.conf — MUST be before `location / { proxy_pass ... }`
+# Or run: sudo bash /var/www/mahkam-website/scripts/deploy/nginx-error-pages.sh
+
 location ^~ /errors/ {
     alias /var/www/mahkam-website/public/errors/;
     default_type text/html;
     charset utf-8;
     access_log off;
+    add_header Cache-Control "no-store";
 }
 
 error_page 502 503 504 /errors/offline.html;
+
+location = /errors/offline.html {
+    root /var/www/mahkam-website/public;
+    internal;
+    default_type text/html;
+    charset utf-8;
+    add_header Cache-Control "no-store";
+}
 ```
 
 **Trailing slash note:** `location /uploads/` + `alias /var/www/mahkam-uploads/;` maps
@@ -162,6 +174,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+
+    # Static 502/503/504 — see docs/nginx/error-pages.conf
+    include /var/www/mahkam-website/docs/nginx/error-pages.conf;
 }
 ```
 

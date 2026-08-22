@@ -21,7 +21,12 @@ export function CatalogLazyGrid({
     <div className="space-y-6">
       <div className={CATALOG_GRID_CLASS}>
         {initialProducts.map((p, index) => (
-          <Reveal key={p.slug} delay={Math.min(index % 10, 9) * 30} variant="scale">
+          <Reveal
+            key={p.slug}
+            className="h-full"
+            delay={Math.min(index % 10, 9) * 30}
+            variant="scale"
+          >
             <ProductCard product={p} priority={index < 5} />
           </Reveal>
         ))}

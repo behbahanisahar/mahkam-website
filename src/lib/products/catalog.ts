@@ -5,7 +5,7 @@ import { CACHE_TAGS, REVALIDATE } from "@/lib/cache";
 
 export const CATALOG_PAGE_SIZE = 30;
 export const CATALOG_GRID_CLASS =
-  "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5";
+  "grid grid-cols-2 items-stretch gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 [&>*]:h-full";
 
 export type CatalogFilters = {
   q?: string;

@@ -7,7 +7,15 @@ APP_DIR="${APP_DIR:-/var/www/mahkam-website}"
 cd "$APP_DIR"
 
 if [[ ! -f .env ]]; then
+  if [[ -f scripts/deploy/restore-env.sh ]]; then
+    echo "→ .env missing — trying restore-env.sh"
+    bash scripts/deploy/restore-env.sh || true
+  fi
+fi
+
+if [[ ! -f .env ]]; then
   echo "Missing $APP_DIR/.env"
+  echo "Run: bash scripts/deploy/restore-env.sh"
   exit 1
 fi
 

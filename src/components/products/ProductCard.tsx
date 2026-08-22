@@ -28,9 +28,9 @@ export function ProductCard({
   return (
     <ProductCardLink
       slug={canonicalProductSlug(product.slug)}
-      className="group card-lift ui-card flex flex-col overflow-hidden"
+      className="group card-lift ui-card flex h-full flex-col overflow-hidden"
     >
-      <div className="relative aspect-square bg-[#e6e4e0]">
+      <div className="relative aspect-square shrink-0 bg-[#e6e4e0]">
         {src ? (
           priority ? (
             <Image
@@ -40,7 +40,7 @@ export function ProductCard({
               priority
               unoptimized={unoptimized}
               className="object-contain"
-              sizes="(max-width:768px) 50vw, 25vw"
+              sizes="(max-width:640px) 50vw, (max-width:768px) 33vw, (max-width:1280px) 25vw, 16vw"
             />
           ) : (
             <LazyImage
@@ -49,20 +49,18 @@ export function ProductCard({
               fill
               wrapperClassName="absolute inset-0"
               className="object-contain"
-              sizes="(max-width:768px) 50vw, 25vw"
+              sizes="(max-width:640px) 50vw, (max-width:768px) 33vw, (max-width:1280px) 25vw, 16vw"
             />
           )
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted">بدون تصویر</div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 border-t border-ink/6 px-4 py-4">
-        <LtrAwareText
-          as="h3"
-          text={product.nameFa}
-          className="text-sm font-bold leading-6 text-ink"
-        />
-        <span className="mt-auto text-xs font-semibold text-copper">مشاهده ←</span>
+      <div className="flex h-24 shrink-0 flex-col justify-between border-t border-ink/6 px-4 py-3">
+        <div className="line-clamp-2 h-12 overflow-hidden text-sm font-bold leading-6 text-ink">
+          <LtrAwareText as="span" text={product.nameFa} />
+        </div>
+        <span className="text-xs font-semibold text-copper">مشاهده ←</span>
       </div>
     </ProductCardLink>
   );

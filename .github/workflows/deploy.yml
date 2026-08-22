@@ -67,7 +67,10 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            chmod +x scripts/deploy/vps-rebuild.sh scripts/deploy/vps-recover.sh
+            chmod +x scripts/deploy/vps-rebuild.sh scripts/deploy/vps-recover.sh scripts/deploy/restore-env.sh
+            if [[ ! -f .env ]]; then
+              bash scripts/deploy/restore-env.sh || true
+            fi
             bash scripts/deploy/vps-rebuild.sh --sync-catalog
 
             docker ps

@@ -50,7 +50,12 @@ export function ProductGridSection({
           ) : (
             <div className={`mt-10 ${CATALOG_GRID_CLASS}`}>
               {products.map((p, index) => (
-                <Reveal key={p.slug} delay={Math.min(index, 7) * 50} variant="scale">
+                <Reveal
+                  key={p.slug}
+                  className="h-full"
+                  delay={Math.min(index, 7) * 50}
+                  variant="scale"
+                >
                   <ProductCard product={p} priority={index < 4} />
                 </Reveal>
               ))}

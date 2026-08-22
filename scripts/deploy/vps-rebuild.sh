@@ -11,7 +11,15 @@ APP_DIR="${APP_DIR:-/var/www/mahkam-website}"
 cd "$APP_DIR"
 
 if [[ ! -f .env ]]; then
+  if [[ -f scripts/deploy/restore-env.sh ]]; then
+    echo "→ .env missing — trying restore-env.sh"
+    bash scripts/deploy/restore-env.sh || true
+  fi
+fi
+
+if [[ ! -f .env ]]; then
   echo "Missing $APP_DIR/.env — abort"
+  echo "Run: bash scripts/deploy/restore-env.sh"
   exit 1
 fi
 
@@ -65,4 +73,11 @@ echo "→ health"
 sleep 3
 curl -sS -o /dev/null -w "home=%{http_code}\n" https://mahkamcable.ir/ || true
 curl -sS https://mahkamcable.ir/ | grep -o 'هنوز دسته‌بندی[^<]*' || echo "menu: categories OK (empty message not found)"
+
+if [[ -f scripts/deploy/nginx-error-pages.sh ]]; then
+  echo "→ nginx static 502 page"
+  chmod +x scripts/deploy/nginx-error-pages.sh
+  bash scripts/deploy/nginx-error-pages.sh || echo "WARN: nginx error pages — run manually with sudo"
+fi
+
 echo "✓ done"

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { CATALOG_GRID_CLASS } from "@/lib/products/catalog";
 
 export function Skeleton({ className }: { className?: string }) {
   return (
@@ -15,9 +16,9 @@ export function SkeletonText({ className }: { className?: string }) {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="ui-card flex flex-col overflow-hidden">
-      <Skeleton className="aspect-square rounded-none" />
-      <div className="space-y-3 border-t border-ink/6 px-4 py-4">
+    <div className="ui-card flex h-full flex-col overflow-hidden">
+      <Skeleton className="aspect-square shrink-0 rounded-none" />
+      <div className="flex h-24 shrink-0 flex-col justify-between border-t border-ink/6 px-4 py-3">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-16" />
       </div>
@@ -79,7 +80,7 @@ export function HomePageSkeleton() {
       <div className="bg-bg-alt/80 px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <Skeleton className="mb-8 h-10 w-48" />
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className={CATALOG_GRID_CLASS}>
             {Array.from({ length: 10 }).map((_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
@@ -107,7 +108,7 @@ export function CatalogPageSkeleton() {
         <Skeleton className="h-8 w-28" />
         <Skeleton className="h-8 w-24" />
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className={CATALOG_GRID_CLASS}>
         {Array.from({ length: 10 }).map((_, i) => (
           <ProductCardSkeleton key={i} />
         ))}
