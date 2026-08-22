@@ -144,9 +144,7 @@ export default async function ProductsPage({
   );
   const visibleSubs = selectedParent
     ? [{ parent: selectedParent, children: selectedParent.children }]
-    : categoryOptions
-        .filter((c) => c.children.length > 0)
-        .map((c) => ({ parent: c, children: c.children }));
+    : [];
 
   return (
     <SiteContainer className="space-y-6 pt-5 sm:pt-6 lg:pt-8">

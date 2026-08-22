@@ -118,41 +118,6 @@ export default async function PricesPage() {
           </a>
         </div>
 
-        <section className="rounded-3xl border border-ink/8 bg-white p-6 sm:p-7">
-          <h2 className="brand-display text-xl font-extrabold text-ink sm:text-2xl">
-            قیمت مس و آلومینیوم برای خریداران سیم و کابل
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-8 text-muted sm:text-base">
-            بسیاری از خریداران هر روز «قیمت مس» و «قیمت آلومینیوم» را چک می‌کنند چون روی قیمت سیم
-            مسی، کابل افشان و کابل آلومینیوم اثر مستقیم دارد. در مهکام نرخ مرجع فلزات را از لایودیتا
-            می‌بینید و برای «خرید مس و آلومینیوم» به‌معنای خرید محصول نهایی (سیم و کابل)، لیست قیمت
-            همکاری را از تلگرام یا دفتر لاله‌زار بگیرید.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3 text-sm">
-            <Link href="/price-list/sim-mesi" className="font-semibold text-copper hover:underline">
-              سیم مسی مهکام
-            </Link>
-            <Link
-              href="/price-list/cable-aluminum"
-              className="font-semibold text-copper hover:underline"
-            >
-              کابل آلومینیوم
-            </Link>
-            <Link
-              href="/price-list/sim-afshan"
-              className="font-semibold text-copper hover:underline"
-            >
-              کابل / سیم افشان
-            </Link>
-            <Link
-              href="/price-list/sim-afshan-earth"
-              className="font-semibold text-copper hover:underline"
-            >
-              کابل ارت افشان
-            </Link>
-          </div>
-        </section>
-
         <DollarHistoryLookup availableDates={pickerDates} />
 
         <Suspense
