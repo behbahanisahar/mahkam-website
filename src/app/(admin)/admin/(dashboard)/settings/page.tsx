@@ -1,4 +1,5 @@
 import { getSiteSettings } from "@/lib/settings";
+import { getTelegramHandleLabel, getTelegramUrl } from "@/lib/site";
 import { changePasswordAction, updateSettingsAction } from "@/lib/actions/admin";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -16,9 +17,13 @@ export default async function AdminSettingsPage() {
             name="telegramUrl"
             required
             defaultValue={settings.telegramUrl}
+            placeholder={getTelegramUrl()}
             className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 px-3 py-2"
             dir="ltr"
           />
+          <span className="mt-1 block text-xs text-muted" dir="ltr">
+            کانال رسمی: {getTelegramHandleLabel()} — {getTelegramUrl()}
+          </span>
         </label>
         <label className="block text-sm">
           تلفن‌ها (هر خط یک شماره)

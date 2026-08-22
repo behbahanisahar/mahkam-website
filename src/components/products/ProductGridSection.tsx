@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { ProductCard, type ProductCardData } from "@/components/products/ProductCard";
 import { Reveal } from "@/components/ui/Reveal";
+import { CATALOG_GRID_CLASS } from "@/lib/products/catalog";
 
 type Props = {
   title: string;
@@ -47,7 +48,7 @@ export function ProductGridSection({
           {products.length === 0 ? (
             <div className="ui-card mt-10 p-10 text-center text-sm text-muted">{emptyMessage}</div>
           ) : (
-            <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className={`mt-10 ${CATALOG_GRID_CLASS}`}>
               {products.map((p, index) => (
                 <Reveal key={p.slug} delay={Math.min(index, 7) * 50} variant="scale">
                   <ProductCard product={p} priority={index < 4} />
@@ -77,9 +78,9 @@ export function ProductGridSection({
       {products.length === 0 ? (
         <div className="ui-card p-8 text-center text-sm text-muted">{emptyMessage}</div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+        <div className={CATALOG_GRID_CLASS}>
           {products.map((p, index) => (
-            <ProductCard key={p.slug} product={p} priority={index < 3} />
+            <ProductCard key={p.slug} product={p} priority={index < 4} />
           ))}
         </div>
       )}

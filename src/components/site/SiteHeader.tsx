@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Phone, ChevronDown, Menu, Search, X, Send } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import { ProductsMegaMenu, type MegaCategory } from "@/components/site/ProductsMegaMenu";
+import { parentSlugOf, isNavCategoryActive } from "@/components/site/nav-category";
+import { useActiveProductCategory } from "@/components/site/useActiveProductCategory";
+import { NavigationProgress } from "@/components/ui/NavigationProgress";
+import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { Toaster } from "@/components/ui/Toaster";
 import { cn } from "@/lib/utils";
-import { formatNumberFa } from "@/lib/i18n/fa";
+import { getTelegramHandleLabel } from "@/lib/site";
 
 const links = [
   { href: "/", label: "خانه" },
@@ -30,17 +35,34 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteHeader({ telegramUrl, phones = [], categories = [] }: HeaderProps) {
+export function SiteHeader(props: HeaderProps) {
+  return (
+    <Suspense fallback={<SiteHeaderBar {...props} activeCategory="" />}>
+      <SiteHeaderFromQuery {...props} />
+    </Suspense>
+  );
+}
+
+function SiteHeaderFromQuery(props: HeaderProps) {
+  const activeCategory = useActiveProductCategory();
+  return <SiteHeaderBar {...props} activeCategory={activeCategory} />;
+}
+
+function SiteHeaderBar({
+  telegramUrl,
+  phones = [],
+  categories = [],
+  activeCategory,
+}: HeaderProps & { activeCategory: string }) {
   const pathname = usePathname();
   const primaryPhone = phones[0];
   const [megaOpen, setMegaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
-  const [scrolled, setScrolled] = useState(false);
+  const [liveCategories, setLiveCategories] = useState<NavCategory[]>(categories);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHome = pathname === "/";
-  const overlay = isHome && !scrolled;
 
   const openMega = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -48,26 +70,50 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
   };
   const scheduleCloseMega = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setMegaOpen(false), 160);
+    closeTimer.current = setTimeout(() => setMegaOpen(false), 240);
   };
+
+  useEffect(() => {
+    setLiveCategories(categories);
+  }, [categories]);
+
+  // If SSR passed an empty list (stale cache), load from API
+  useEffect(() => {
+    if (categories.length > 0) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/categories");
+        if (!res.ok) return;
+        const json = (await res.json()) as { categories?: NavCategory[] };
+        if (!cancelled && json.categories?.length) {
+          setLiveCategories(json.categories);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [categories.length]);
 
   useEffect(() => {
     setMegaOpen(false);
     setMobileOpen(false);
     setMobileProductsOpen(false);
-    setExpandedSlug(null);
-  }, [pathname]);
+  }, [pathname, activeCategory]);
 
   useEffect(() => {
-    if (!isHome) {
-      setScrolled(false);
-      return;
-    }
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isHome]);
+    const parent = parentSlugOf(liveCategories, activeCategory);
+    if (parent) setExpandedSlug(parent);
+  }, [activeCategory, liveCategories]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    if (pathname !== "/products") return;
+    setMobileProductsOpen(true);
+  }, [mobileOpen, pathname]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -90,14 +136,17 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
 
   return (
     <>
+      <ScrollProgress />
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
+      <Toaster />
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 w-full text-white transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
-          overlay
-            ? "border-b border-transparent bg-transparent"
-            : isHome
-              ? "border-b border-white/10 bg-ink/70 shadow-lg shadow-black/20 backdrop-blur-md"
-              : "border-b border-ink/8 bg-white/90 text-ink shadow-sm backdrop-blur-md",
+          "fixed inset-x-0 top-0 z-50 w-full transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
+          isHome
+            ? "border-b border-white/10 bg-ink/70 text-white shadow-lg shadow-black/20 backdrop-blur-md"
+            : "border-b border-ink/8 bg-white/90 text-ink shadow-sm backdrop-blur-md",
         )}
       >
         <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8">
@@ -137,18 +186,24 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
                     onFocus={openMega}
                     onBlur={scheduleCloseMega}
                   >
-                    <button
-                      type="button"
+                    <Link
+                      href="/products"
                       aria-expanded={megaOpen}
                       aria-haspopup="menu"
-                      onClick={() => setMegaOpen((v) => !v)}
                       className={cn("nav-pill inline-flex items-center gap-1", linkTone)}
                     >
                       {l.label}
                       <ChevronDown
                         className={cn("size-3.5 transition duration-200", megaOpen && "rotate-180")}
                       />
-                    </button>
+                    </Link>
+                    <ProductsMegaMenu
+                      open={megaOpen}
+                      categories={liveCategories}
+                      activeSlug={activeCategory}
+                      isCatalogPage={pathname === "/products"}
+                      onNavigate={() => setMegaOpen(false)}
+                    />
                   </div>
                 );
               }
@@ -213,19 +268,6 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
             </button>
           </div>
 
-          <div
-            className="absolute inset-x-0 top-full z-50 hidden lg:block"
-            onMouseEnter={openMega}
-            onMouseLeave={scheduleCloseMega}
-          >
-            <div className="relative mx-auto max-w-7xl px-0">
-              <ProductsMegaMenu
-                open={megaOpen}
-                categories={categories}
-                onNavigate={() => setMegaOpen(false)}
-              />
-            </div>
-          </div>
         </div>
       </header>
 
@@ -286,27 +328,37 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
                             <Link
                               href="/products"
                               onClick={() => setMobileOpen(false)}
-                              className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-copper"
+                              aria-current={pathname === "/products" && !activeCategory ? "page" : undefined}
+                              className={cn(
+                                "block rounded-lg px-3 py-2.5 text-sm font-semibold",
+                                pathname === "/products" && !activeCategory
+                                  ? "bg-copper/20 text-copper"
+                                  : "text-copper",
+                              )}
                             >
                               همه محصولات
                             </Link>
-                            {categories.map((cat) => {
+                            {liveCategories.map((cat) => {
                               const open = expandedSlug === cat.slug;
                               const hasChildren = Boolean(cat.children?.length);
+                              const catActive = isNavCategoryActive(
+                                cat.slug,
+                                activeCategory,
+                                cat.children,
+                              );
                               return (
                                 <div key={cat.slug} className="border-t border-white/8">
                                   <div className="flex items-stretch">
                                     <Link
                                       href={`/products?category=${cat.slug}`}
                                       onClick={() => setMobileOpen(false)}
-                                      className="min-w-0 flex-1 px-3 py-2.5 text-sm font-medium text-white/85"
+                                      aria-current={cat.slug === activeCategory ? "page" : undefined}
+                                      className={cn(
+                                        "min-w-0 flex-1 px-3 py-2.5 text-sm font-medium",
+                                        catActive ? "text-copper" : "text-white/85",
+                                      )}
                                     >
                                       {cat.nameFa}
-                                      {typeof cat.productCount === "number" ? (
-                                        <span className="mr-2 text-xs text-copper">
-                                          ({formatNumberFa(cat.productCount)})
-                                        </span>
-                                      ) : null}
                                     </Link>
                                     {hasChildren ? (
                                       <button
@@ -333,23 +385,26 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
                                     )}
                                   >
                                     <div className="min-h-0 overflow-hidden">
-                                      {cat.children?.map((child) => (
+                                      {cat.children?.map((child) => {
+                                        const selected = child.slug === activeCategory;
+                                        return (
                                         <Link
                                           key={child.slug}
                                           href={`/products?category=${child.slug}`}
                                           onClick={() => setMobileOpen(false)}
-                                          className="flex items-center gap-2 px-3 py-2 pr-5 text-[13px] text-white/55"
+                                          aria-current={selected ? "page" : undefined}
+                                          className={cn(
+                                            "flex items-center gap-2 px-3 py-2 pr-5 text-[13px]",
+                                            selected
+                                              ? "rounded-lg bg-white/10 font-semibold text-white"
+                                              : "text-white/55",
+                                          )}
                                         >
                                           <span className="size-1.5 rounded-full bg-copper" />
-                                          <span className="flex-1">{child.nameFa}</span>
-                                          {typeof child.productCount === "number" &&
-                                          child.productCount > 0 ? (
-                                            <span className="text-[11px] text-white/30">
-                                              {formatNumberFa(child.productCount)}
-                                            </span>
-                                          ) : null}
+                                          <span>{child.nameFa}</span>
                                         </Link>
-                                      ))}
+                                      );
+                                      })}
                                     </div>
                                   </div>
                                 </div>
@@ -395,7 +450,7 @@ export function SiteHeader({ telegramUrl, phones = [], categories = [] }: Header
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-[#229ED9] py-3 text-sm font-semibold text-white transition hover:bg-[#1B8FC7]"
               >
                 <Send className="size-4" />
-                تلگرام مهکام
+                <span dir="ltr">{getTelegramHandleLabel()}</span>
               </a>
             </div>
           </div>

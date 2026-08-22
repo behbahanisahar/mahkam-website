@@ -11,25 +11,29 @@ import { getSiteSettings } from "@/lib/settings";
 import { getAllTimePopularProducts, getFeaturedProducts } from "@/lib/products/popularity";
 import { getLiveDataRates } from "@/lib/prices/livedata";
 import { snapshotsAsLiveDataFallback } from "@/lib/prices/snapshots";
+import { SITE_PAGE_META } from "@/lib/seo/site-pages";
 
+/** ISR: rebuild HTML every 5 minutes; data also cached via unstable_cache tags. */
 export const revalidate = 300;
 
+export const metadata = SITE_PAGE_META.home;
+
 export default async function HomePage() {
-  const [settings, popular, featured, liveRates] = await Promise.all([
+  const [settings, popular, liveRates] = await Promise.all([
     getSiteSettings(),
     getAllTimePopularProducts(6),
-    getFeaturedProducts(6),
     getLiveDataRates().catch(() => ({ rates: [], fetchedAt: new Date().toISOString() })),
   ]);
+
+  const products =
+    popular.length > 0 ? popular : await getFeaturedProducts(6);
+  const subtitle =
+    popular.length > 0 ? "پربازدیدترین محصولات" : "منتخب کاتالوگ مهکام";
 
   const initialPrices =
     liveRates.rates.length > 0
       ? liveRates
       : ((await snapshotsAsLiveDataFallback().catch(() => null)) ?? liveRates);
-
-  const products = popular.length > 0 ? popular : featured;
-  const subtitle =
-    popular.length > 0 ? "پربازدیدترین محصولات" : "منتخب کاتالوگ مهکام";
 
   const blurb =
     settings.companyBlurb ??

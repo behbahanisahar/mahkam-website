@@ -50,10 +50,11 @@ export function HomeAboutSection({ blurb }: Props) {
               <div className="shining-about-frame relative mx-auto w-full max-w-sm lg:ms-0 lg:me-auto lg:max-w-none">
                 <div className="relative aspect-[3/4] overflow-hidden bg-zinc-200 shadow-[0_24px_50px_-28px_rgba(0,0,0,0.45)]">
                   <Image
-                    src="/images/section-about.jpg"
+                    src="/images/section-about.webp"
                     alt="کنترل کیفیت و مشخصات فنی در مهکام"
                     fill
-                    quality={82}
+                    loading="lazy"
+                    quality={75}
                     className="object-cover object-[50%_20%]"
                     sizes="(max-width:1024px) 90vw, 38vw"
                   />

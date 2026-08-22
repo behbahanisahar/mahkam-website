@@ -27,8 +27,15 @@ async function main() {
       slug: "sim-afshan",
       description: "سیم افشان مسی با عایق PVC",
       sortOrder: 10,
+      parentId: null,
     },
-    update: { nameFa: "سیم افشان", description: "سیم افشان مسی با عایق PVC" },
+    // Clear any legacy parent so the mega-menu (parentId: null) can see this root.
+    update: {
+      nameFa: "سیم افشان",
+      description: "سیم افشان مسی با عایق PVC",
+      parentId: null,
+      sortOrder: 10,
+    },
   });
 
   const earth = await prisma.category.upsert({
@@ -44,7 +51,13 @@ async function main() {
       nameFa: "سیم ارت افشان",
       parentId: parent.id,
       description: "سیم افشان ارت با روکش سبز و زرد",
+      sortOrder: 11,
     },
+  });
+
+  console.log("categories", {
+    root: { slug: parent.slug, parentId: parent.parentId },
+    earth: { slug: earth.slug, parentId: earth.parentId },
   });
 
   let sort = 0;
@@ -120,6 +133,22 @@ async function main() {
   }
 
   console.log(`Synced ${products.length} افشان products`);
+
+  // Bust Next.js layout/menu cache (empty mega-menu after first boot)
+  const secret = process.env.CRON_SECRET?.trim();
+  if (secret) {
+    try {
+      const res = await fetch("http://127.0.0.1:3000/api/revalidate", {
+        method: "POST",
+        headers: { "x-cron-secret": secret },
+      });
+      console.log("revalidate", res.status, await res.text());
+    } catch (e) {
+      console.warn("revalidate skipped:", e instanceof Error ? e.message : e);
+    }
+  } else {
+    console.warn("CRON_SECRET missing — clear cache manually: rm -rf /app/.next/cache && docker compose restart");
+  }
 }
 
 main()

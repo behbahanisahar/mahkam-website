@@ -5,12 +5,12 @@ import { ContactMap } from "@/components/site/ContactMap";
 import { TelegramIcon } from "@/components/site/TelegramIcon";
 import { formatPhoneFa, toPersianDigits } from "@/lib/i18n/fa";
 import { getSiteSettings } from "@/lib/settings";
+import { getTelegramHandleLabel } from "@/lib/site";
+import { SITE_PAGE_META } from "@/lib/seo/site-pages";
 
-export const metadata: Metadata = {
-  title: "تماس با ما",
-  description: "راه‌های ارتباطی با شرکت گسترش سیم و کابل مهکام و کانال تلگرام قیمت روز.",
-  alternates: { canonical: "/contact" },
-};
+export const metadata: Metadata = SITE_PAGE_META.contact;
+
+export const revalidate = 3600;
 
 const DEFAULT_ADDRESS =
   "تهران، خیابان لاله‌زار نو، کوچه معمار مخصوص، پاساژ چلچراغ، طبقه ۴، واحد ۱۰";
@@ -171,7 +171,7 @@ export default async function ContactPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#229ED9] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1b8fc7]"
                 >
                   <TelegramIcon className="size-4" />
-                  کانال تلگرام
+                  <span dir="ltr">{getTelegramHandleLabel()}</span>
                 </a>
                 <a
                   href={telHref}

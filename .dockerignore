@@ -19,3 +19,20 @@ mahkam-deploy.tar.gz
 *.pem
 *.tsbuildinfo
 .vercel
+# Large unbranded masters — never bake into the runtime image
+public/images/catalog-raw
+# Unused hero variants (canonical heroes are *-1920 / *-1080 / shining-night.webp)
+public/images/hero-cable-4k.jpg
+public/images/hero-cable-4k.webp
+public/images/hero-cable-ring.jpg
+public/images/hero-cable-ring.webp
+public/images/hero-cable-studio.jpg
+public/images/hero-cable-studio.webp
+public/images/hero-rooftop-infra.jpg
+public/images/hero-rooftop-infra.webp
+public/images/hero-nilsson-v2.jpg
+public/images/hero-nilsson-v2-mobile.jpg
+public/images/hero-shining-night.jpg
+public/images/hero-business.jpg
+public/images/section-hero.jpg
+

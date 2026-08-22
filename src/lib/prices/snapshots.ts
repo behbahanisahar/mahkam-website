@@ -15,7 +15,7 @@ const SNAPSHOT_TO_LIVE: Record<
   PriceSnapshotCard["symbol"],
   { id: string; label: string; unitOverride?: string }
 > = {
-  USD_RLS: { id: "200101", label: "دلار صرافی", unitOverride: "تومان" },
+  USD_RLS: { id: "200103", label: "دلار آزاد", unitOverride: "تومان" },
   COPPER: { id: "301006", label: "مس" },
   ALUMINUM: { id: "300606", label: "آلومینیوم" },
 };
@@ -73,6 +73,9 @@ export async function snapshotsAsLiveDataFallback(): Promise<LiveDataResult | nu
           id: map.id,
           label: map.label,
           value,
+          previous: value,
+          high: value,
+          low: value,
           change: 0,
           changePct: "",
           unit,
@@ -92,3 +95,38 @@ export async function snapshotsAsLiveDataFallback(): Promise<LiveDataResult | nu
     return null;
   }
 }
+
+export const getRecentDollarArchive = unstable_cache(
+  async () => {
+    const rows = await prisma.dollarDaily.findMany({
+      orderBy: { date: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        dateJalali: true,
+        close: true,
+        low: true,
+        high: true,
+      },
+    });
+    return rows.slice(0, 10);
+  },
+  ["dollar-recent-archive-v3"],
+  { revalidate: REVALIDATE.snapshots, tags: [CACHE_TAGS.snapshots] },
+);
+
+/** All archived Jalali dates for the prices datepicker (only these days are selectable). */
+export const getDollarArchivePickerDates = unstable_cache(
+  async () => {
+    const rows = await prisma.dollarDaily.findMany({
+      orderBy: { date: "desc" },
+      select: { dateJalali: true, close: true },
+    });
+    return rows.map((r) => ({
+      jalali: r.dateJalali,
+      close: r.close,
+    }));
+  },
+  ["dollar-archive-picker-dates-v1"],
+  { revalidate: REVALIDATE.snapshots, tags: [CACHE_TAGS.snapshots] },
+);

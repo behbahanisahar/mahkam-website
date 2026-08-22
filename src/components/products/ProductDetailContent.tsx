@@ -41,7 +41,13 @@ const SECTIONS = [
   },
 ] as const;
 
-export function ProductDetailContent({ product }: { product: ProductDetailSections }) {
+export function ProductDetailContent({
+  product,
+  omit = [],
+}: {
+  product: ProductDetailSections;
+  omit?: Array<(typeof SECTIONS)[number]["key"]>;
+}) {
   const items = SECTIONS.map((s) => {
     const direct = product[s.key];
     const text =
@@ -49,14 +55,14 @@ export function ProductDetailContent({ product }: { product: ProductDetailSectio
       ("fallback" in s && s.fallback ? s.fallback(product)?.trim() : "") ||
       "";
     return { ...s, text };
-  }).filter((s) => s.text);
+  }).filter((s) => s.text && !omit.includes(s.key));
 
   if (items.length === 0) return null;
 
   return (
     <div className="space-y-4">
       {items.map(({ key, title, icon: Icon, text }) => (
-        <section key={key} className="ui-card overflow-hidden">
+        <section key={key} className="ui-card">
           <h2 className="flex items-center gap-2 border-b border-glass-border bg-bg-alt/60 px-4 py-3 text-sm font-semibold text-copper-deep sm:px-5">
             <Icon className="size-4 shrink-0" aria-hidden />
             {title}

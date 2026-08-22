@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, MapPin, Phone, Send } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import { formatPhoneFa } from "@/lib/i18n/fa";
+import { getTelegramHandleLabel } from "@/lib/site";
 
 type FooterProps = {
   telegramUrl: string;
@@ -11,6 +12,8 @@ type FooterProps = {
 
 const NAV_LINKS = [
   { href: "/products", label: "محصولات" },
+  { href: "/price-list", label: "لیست قیمت" },
+  { href: "/guides", label: "راهنما" },
   { href: "/prices", label: "نرخ‌ها" },
   { href: "/faq", label: "سوالات متداول" },
   { href: "/about", label: "درباره ما" },
@@ -148,7 +151,7 @@ export function Footer({ telegramUrl, phones = [], address }: FooterProps) {
                 className="inline-flex items-center gap-2 transition hover:text-white"
               >
                 <Send className="size-4 text-[#229ED9]" />
-                تلگرام مهکام
+                <span dir="ltr">{getTelegramHandleLabel()}</span>
               </a>
             </li>
             <li>

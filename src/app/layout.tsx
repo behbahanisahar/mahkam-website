@@ -3,8 +3,7 @@ import { Suspense } from "react";
 import localFont from "next/font/local";
 import "./globals.css";
 import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/OrganizationJsonLd";
-import { NavigationProgress } from "@/components/ui/NavigationProgress";
-import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { GoogleAnalytics } from "@/components/seo/GoogleAnalytics";
 import { getSiteName, getSiteUrl } from "@/lib/site";
 
 const shabnam = localFont({
@@ -23,6 +22,7 @@ const shabnam = localFont({
 
 const siteUrl = getSiteUrl();
 const siteName = getSiteName();
+const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -49,16 +49,19 @@ export const metadata: Metadata = {
     title: siteName,
     description:
       "مشاهده محصولات سیم و کابل مهکام، مشخصات فنی و استعلام قیمت از تلگرام.",
-    images: [{ url: "/images/mahkam-logo.png", alt: siteName }],
+    images: [{ url: "/images/og-default.webp", alt: siteName, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: siteName,
     description:
       "مشاهده محصولات سیم و کابل مهکام، مشخصات فنی و استعلام قیمت از تلگرام.",
-    images: ["/images/mahkam-logo.png"],
+    images: ["/images/og-default.webp"],
   },
   robots: { index: true, follow: true },
+  verification: {
+    google: "google83bad002c76fbe64",
+  },
   alternates: { canonical: "/" },
   icons: {
     icon: [
@@ -74,12 +77,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fa" dir="rtl" className={`${shabnam.variable} h-full`}>
       <body className={`${shabnam.className} min-h-full antialiased`}>
+        {gaId ? (
+          <Suspense fallback={null}>
+            <GoogleAnalytics measurementId={gaId} />
+          </Suspense>
+        ) : null}
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
-        <ScrollProgress />
-        <Suspense fallback={null}>
-          <NavigationProgress />
-        </Suspense>
         {children}
       </body>
     </html>

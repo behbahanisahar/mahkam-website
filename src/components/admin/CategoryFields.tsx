@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Select } from "@/components/ui/Select";
 
 export type CategoryOption = {
   id: string;
@@ -40,44 +41,39 @@ export function CategoryFields({
     <div className="grid gap-4 sm:grid-cols-2">
       <label className="block text-sm">
         دسته
-        <select
+        <Select
           value={parentId}
-          onChange={(e) => {
-            setParentId(e.target.value);
+          onChange={(value) => {
+            setParentId(value);
             setChildId("");
           }}
-          className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 py-2 pr-3 pl-10"
-        >
-          <option value="">انتخاب دسته</option>
-          {parents.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nameFa}
-            </option>
-          ))}
-        </select>
+          className="mt-1"
+          options={[
+            { value: "", label: "انتخاب دسته" },
+            ...parents.map((c) => ({ value: c.id, label: c.nameFa })),
+          ]}
+        />
       </label>
 
       <label className="block text-sm">
         زیردسته
-        <select
+        <Select
           value={childId}
-          onChange={(e) => setChildId(e.target.value)}
+          onChange={setChildId}
           disabled={!parentId || children.length === 0}
-          className="mt-1 w-full rounded-xl border border-glass-border bg-white/80 py-2 pr-3 pl-10 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <option value="">
-            {!parentId
-              ? "ابتدا دسته را انتخاب کنید"
-              : children.length === 0
-                ? "بدون زیردسته (همین دسته)"
-                : "بدون زیردسته / همه"}
-          </option>
-          {children.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nameFa}
-            </option>
-          ))}
-        </select>
+          className="mt-1"
+          options={[
+            {
+              value: "",
+              label: !parentId
+                ? "ابتدا دسته را انتخاب کنید"
+                : children.length === 0
+                  ? "بدون زیردسته (همین دسته)"
+                  : "بدون زیردسته / همه",
+            },
+            ...children.map((c) => ({ value: c.id, label: c.nameFa })),
+          ]}
+        />
       </label>
 
       <input type="hidden" name="categoryId" value={categoryId} />

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>سرویس موقتاً در دسترس نیست | مهکام</title>
+    <meta name="robots" content="noindex" />
+    <style>
+      :root {
+        --bg: #f3f4f6;
+        --ink: #111318;
+        --muted: #5c6370;
+        --copper: #b8952a;
+        --chrome: #12151b;
+        --white: #ffffff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at top, rgba(184, 149, 42, 0.14), transparent 55%),
+          linear-gradient(180deg, #f7f6f4 0%, #eef0f3 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+      .card {
+        width: 100%;
+        max-width: 28rem;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(17, 19, 24, 0.09);
+        border-radius: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 20px 50px -28px rgba(17, 19, 24, 0.45);
+      }
+      .head {
+        background: var(--chrome);
+        color: var(--white);
+        padding: 1rem 1.25rem;
+      }
+      .head .brand {
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        color: #c9a83a;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .head .sub { margin: 0.25rem 0 0; font-size: 0.85rem; opacity: 0.7; }
+      .body { padding: 2rem 1.25rem 1.75rem; text-align: center; }
+      .code {
+        margin: 0;
+        font-size: 3.25rem;
+        font-weight: 800;
+        color: var(--copper);
+        line-height: 1;
+      }
+      h1 { margin: 1rem 0 0.75rem; font-size: 1.25rem; }
+      p { margin: 0; color: var(--muted); font-size: 0.9rem; line-height: 1.8; }
+      .actions {
+        margin-top: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      @media (min-width: 480px) {
+        .actions { flex-direction: row; justify-content: center; }
+      }
+      a.btn, button.btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+        border: 0;
+        cursor: pointer;
+      }
+      .btn-copper {
+        background: linear-gradient(135deg, #c9a83a, #b8952a, #96781f);
+        color: #111;
+      }
+      .btn-ink {
+        background: var(--chrome);
+        color: var(--white);
+      }
+      .links {
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .links a { color: inherit; margin: 0 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="alert">
+      <div class="head">
+        <div class="brand">مهکام · MAHKAM</div>
+        <p class="sub">گسترش سیم و کابل</p>
+      </div>
+      <div class="body">
+        <p class="code">۵۰۲</p>
+        <h1>سرویس موقتاً در دسترس نیست</h1>
+        <p>
+          ارتباط با سرور برقرار نشد (Bad Gateway). معمولاً چند لحظه طول می‌کشد.
+          لطفاً دوباره تلاش کنید.
+        </p>
+        <div class="actions">
+          <button class="btn btn-copper" type="button" onclick="location.reload()">تلاش دوباره</button>
+          <a class="btn btn-ink" href="/">صفحه اصلی</a>
+        </div>
+        <div class="links">
+          <a href="/products">محصولات</a>
+          <a href="/contact">تماس</a>
+        </div>
+      </div>
+    </main>
+    <script>
+      (function () {
+        try {
+          var payload = {
+            level: "offline",
+            source: "gateway",
+            statusCode: 502,
+            message: "Static 502/offline page shown to user",
+            path: location.pathname + location.search,
+          };
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon("/api/errors", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+          } else {
+            fetch("/api/errors", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+              keepalive: true,
+            }).catch(function () {});
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </body>
+</html>

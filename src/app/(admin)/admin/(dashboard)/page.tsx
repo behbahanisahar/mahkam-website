@@ -7,28 +7,78 @@ import {
   Plus,
   ArrowLeft,
   TrendingUp,
+  AlertTriangle,
 } from "lucide-react";
-import { prisma, withDbTimeout } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { formatNumberFa } from "@/lib/i18n/fa";
 import { getAdminPopularitySummary } from "@/lib/products/popularity";
+import { AdminDbNotice } from "@/components/admin/AdminDbNotice";
+
+export const dynamic = "force-dynamic";
+
+async function safeCount(fn: () => Promise<number>): Promise<number> {
+  try {
+    return await fn();
+  } catch {
+    return 0;
+  }
+}
 
 export default async function AdminDashboard() {
-  const emptyPopularity = { allTime: [] as Awaited<ReturnType<typeof getAdminPopularitySummary>>["allTime"] };
+  let products = 0;
+  let published = 0;
+  let categories = 0;
+  let dollarCount = 0;
+  let totalViews = 0;
+  let drafts = 0;
+  let openErrors = 0;
+  let popularity: Awaited<ReturnType<typeof getAdminPopularitySummary>> = {
+    allTime: [],
+  };
+  let dbDown = false;
 
-  const [products, published, categories, dollarCount, popularity, totalViews, drafts] =
-    await withDbTimeout(
-      Promise.all([
-        prisma.product.count(),
-        prisma.product.count({ where: { isPublished: true } }),
-        prisma.category.count(),
-        prisma.dollarDaily.count(),
-        getAdminPopularitySummary(5),
-        prisma.productView.count(),
-        prisma.product.count({ where: { isPublished: false } }),
-      ]),
-      5_000,
-      [0, 0, 0, 0, emptyPopularity, 0, 0],
-    );
+  try {
+    const [
+      productsN,
+      publishedN,
+      categoriesN,
+      dollarCountN,
+      totalViewsN,
+      draftsN,
+      popularityN,
+      openErrorsN,
+    ] = await Promise.all([
+      safeCount(() => prisma.product.count()),
+      safeCount(() => prisma.product.count({ where: { isPublished: true } })),
+      safeCount(() => prisma.category.count()),
+      safeCount(() => prisma.dollarDaily.count()),
+      safeCount(() => prisma.productView.count()),
+      safeCount(() => prisma.product.count({ where: { isPublished: false } })),
+      getAdminPopularitySummary(5),
+      // AppErrorLog may be missing until `prisma db push` on the VPS
+      safeCount(() => prisma.appErrorLog.count({ where: { resolved: false } })),
+    ]);
+
+    products = productsN;
+    published = publishedN;
+    categories = categoriesN;
+    dollarCount = dollarCountN;
+    totalViews = totalViewsN;
+    drafts = draftsN;
+    popularity = popularityN;
+    openErrors = openErrorsN;
+
+    // If core tables also return 0 and product query actually fails, surface notice
+    if (products === 0 && published === 0 && categories === 0) {
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+      } catch {
+        dbDown = true;
+      }
+    }
+  } catch {
+    dbDown = true;
+  }
 
   const stats = [
     {
@@ -73,10 +123,19 @@ export default async function AdminDashboard() {
       icon: TrendingUp,
       tone: "bg-copper/12 text-copper-deep",
     },
+    {
+      label: "خطاهای باز",
+      value: openErrors,
+      href: "/admin/errors",
+      icon: AlertTriangle,
+      tone: openErrors > 0 ? "bg-red-500/12 text-red-800" : "bg-emerald-500/12 text-emerald-800",
+    },
   ];
 
   return (
     <div className="space-y-6">
+      {dbDown ? <AdminDbNotice /> : null}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-medium text-copper">خوش آمدید</p>
@@ -132,7 +191,10 @@ export default async function AdminDashboard() {
           ) : (
             <ul className="mt-4 divide-y divide-glass-border/70">
               {popularity.allTime.map((row, i) => (
-                <li key={row.product?.id ?? i} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <li
+                  key={row.product?.id ?? i}
+                  className="flex items-center justify-between gap-3 py-3 text-sm"
+                >
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-copper/15 text-xs font-bold text-copper">
                       {formatNumberFa(i + 1)}

@@ -1,13 +1,25 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { ErrorState } from "@/components/site/ErrorState";
+import { pageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata: Metadata = pageMetadata({
+  title: "صفحه پیدا نشد",
+  description: "آدرس واردشده در سایت مهکام وجود ندارد یا جابه‌جا شده است.",
+  path: "/",
+  index: false,
+  follow: true,
+});
 
 export default function NotFound() {
   return (
-    <div className="ui-card mx-auto mt-16 max-w-lg p-10 text-center">
-      <h1 className="brand-display text-3xl font-bold text-ink">۴۰۴</h1>
-      <p className="mt-3 text-sm text-muted">صفحه مورد نظر یافت نشد.</p>
-      <Link href="/" className="btn-ink mt-6 inline-flex px-5 py-2.5 text-sm font-medium">
-        بازگشت به خانه
-      </Link>
-    </div>
+    <ErrorState
+      code="۴۰۴"
+      title="صفحه پیدا نشد"
+      description="آدرس واردشده وجود ندارد یا جابه‌جا شده است. از منو یا جستجو محصول موردنظر را پیدا کنید."
+      statusCode={404}
+      source="client"
+      showRetry={false}
+      log={false}
+    />
   );
 }

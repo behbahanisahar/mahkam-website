@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Loader2, Search, X } from "lucide-react";
+import { Select, type SelectGroup, type SelectOption } from "@/components/ui/Select";
 
 export type AdminCategoryOption = {
   id: string;
@@ -30,6 +31,28 @@ export function AdminProductSearch({
   const parents = categories.filter((c) => !c.parentId);
   const childrenOf = (parentId: string) =>
     categories.filter((c) => c.parentId === parentId);
+
+  const categoryGroups = useMemo<SelectGroup[]>(() => {
+    return parents.map((p) => {
+      const kids = childrenOf(p.id);
+      if (kids.length === 0) {
+        return { label: "", options: [{ value: p.id, label: p.nameFa }] };
+      }
+      return {
+        label: p.nameFa,
+        options: [
+          { value: p.id, label: `همهٔ ${p.nameFa}` },
+          ...kids.map((c) => ({ value: c.id, label: c.nameFa })),
+        ],
+      };
+    });
+  }, [categories, parents]);
+
+  const statusOptions: SelectOption[] = [
+    { value: "", label: "همه وضعیت‌ها" },
+    { value: "published", label: "منتشر" },
+    { value: "draft", label: "پیش‌نویس" },
+  ];
 
   function push(next: { q?: string; category?: string; status?: string }) {
     const params = new URLSearchParams();
@@ -76,51 +99,30 @@ export function AdminProductSearch({
           />
         </div>
 
-        <select
+        <Select
           value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            push({ category: e.target.value });
+          onChange={(value) => {
+            setCategoryId(value);
+            push({ category: value });
           }}
           disabled={pending}
-          className="rounded-xl border border-glass-border bg-white py-2.5 px-3 text-sm disabled:opacity-70 lg:w-52"
-        >
-          <option value="">همه دسته‌ها</option>
-          {parents.map((p) => {
-            const kids = childrenOf(p.id);
-            if (kids.length === 0) {
-              return (
-                <option key={p.id} value={p.id}>
-                  {p.nameFa}
-                </option>
-              );
-            }
-            return (
-              <optgroup key={p.id} label={p.nameFa}>
-                <option value={p.id}>همهٔ {p.nameFa}</option>
-                {kids.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nameFa}
-                  </option>
-                ))}
-              </optgroup>
-            );
-          })}
-        </select>
+          className="lg:w-52"
+          aria-label="دسته‌بندی"
+          options={[{ value: "", label: "همه دسته‌ها" }]}
+          groups={categoryGroups.filter((g) => g.options.length > 0)}
+        />
 
-        <select
+        <Select
           value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            push({ status: e.target.value });
+          onChange={(value) => {
+            setStatus(value);
+            push({ status: value });
           }}
           disabled={pending}
-          className="rounded-xl border border-glass-border bg-white py-2.5 px-3 text-sm disabled:opacity-70 lg:w-40"
-        >
-          <option value="">همه وضعیت‌ها</option>
-          <option value="published">منتشر</option>
-          <option value="draft">پیش‌نویس</option>
-        </select>
+          className="lg:w-40"
+          options={statusOptions}
+          aria-label="وضعیت"
+        />
 
         <div className="flex items-center gap-2">
           <button

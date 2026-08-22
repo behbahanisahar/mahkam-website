@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Package, LineChart, Phone, ChevronDown, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatNumberFa } from "@/lib/i18n/fa";
 import type { NavCategory } from "@/components/site/SiteHeader";
+import { parentSlugOf, isNavCategoryActive } from "@/components/site/nav-category";
+import { useActiveProductCategory } from "@/components/site/useActiveProductCategory";
 
 type Props = {
   telegramUrl: string;
@@ -24,6 +25,29 @@ const rightItems = [
 ] as const;
 
 export function MobileBottomNav({ telegramUrl, categories = [] }: Props) {
+  return (
+    <Suspense fallback={<MobileBottomNavBar telegramUrl={telegramUrl} categories={categories} activeCategory="" />}>
+      <MobileBottomNavFromQuery telegramUrl={telegramUrl} categories={categories} />
+    </Suspense>
+  );
+}
+
+function MobileBottomNavFromQuery({ telegramUrl, categories = [] }: Props) {
+  const activeCategory = useActiveProductCategory();
+  return (
+    <MobileBottomNavBar
+      telegramUrl={telegramUrl}
+      categories={categories}
+      activeCategory={activeCategory}
+    />
+  );
+}
+
+function MobileBottomNavBar({
+  telegramUrl,
+  categories = [],
+  activeCategory,
+}: Props & { activeCategory: string }) {
   const pathname = usePathname();
   const [productsOpen, setProductsOpen] = useState(false);
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
@@ -31,8 +55,12 @@ export function MobileBottomNav({ telegramUrl, categories = [] }: Props) {
 
   useEffect(() => {
     setProductsOpen(false);
-    setExpandedSlug(null);
-  }, [pathname]);
+  }, [pathname, activeCategory]);
+
+  useEffect(() => {
+    const parent = parentSlugOf(categories, activeCategory);
+    if (parent) setExpandedSlug(parent);
+  }, [activeCategory, categories]);
 
   useEffect(() => {
     if (!productsOpen) return;
@@ -134,27 +162,37 @@ export function MobileBottomNav({ telegramUrl, categories = [] }: Props) {
               <Link
                 href="/products"
                 onClick={() => setProductsOpen(false)}
-                className="block px-5 py-3.5 text-sm font-semibold text-copper transition active:bg-white/5"
+                aria-current={pathname === "/products" && !activeCategory ? "page" : undefined}
+                className={cn(
+                  "block px-5 py-3.5 text-sm font-semibold transition active:bg-white/5",
+                  pathname === "/products" && !activeCategory
+                    ? "bg-white/8 text-copper"
+                    : "text-copper",
+                )}
               >
                 همه محصولات
               </Link>
               {categories.map((cat) => {
                 const hasChildren = Boolean(cat.children?.length);
                 const open = expandedSlug === cat.slug;
+                const catActive = isNavCategoryActive(
+                  cat.slug,
+                  activeCategory,
+                  cat.children,
+                );
                 return (
                   <div key={cat.slug} className="border-t border-white/8">
                     <div className="flex items-stretch">
                       <Link
                         href={`/products?category=${cat.slug}`}
                         onClick={() => setProductsOpen(false)}
-                        className="min-w-0 flex-1 px-5 py-3.5 text-sm font-medium text-white/85 transition active:bg-white/5"
+                        aria-current={cat.slug === activeCategory ? "page" : undefined}
+                        className={cn(
+                          "min-w-0 flex-1 px-5 py-3.5 text-sm font-medium transition active:bg-white/5",
+                          catActive ? "bg-white/8 text-copper" : "text-white/85",
+                        )}
                       >
                         <span className="block truncate">{cat.nameFa}</span>
-                        {typeof cat.productCount === "number" ? (
-                          <span className="mt-0.5 block text-[11px] text-white/40">
-                            {formatNumberFa(cat.productCount)} محصول
-                          </span>
-                        ) : null}
                       </Link>
                       {hasChildren ? (
                         <button
@@ -179,23 +217,27 @@ export function MobileBottomNav({ telegramUrl, categories = [] }: Props) {
                       >
                         <div className="min-h-0 overflow-hidden">
                           <ul className="border-t border-white/6 bg-white/[0.03] pb-2">
-                            {cat.children!.map((child) => (
+                            {cat.children!.map((child) => {
+                              const selected = child.slug === activeCategory;
+                              return (
                               <li key={child.slug}>
                                 <Link
                                   href={`/products?category=${child.slug}`}
                                   onClick={() => setProductsOpen(false)}
-                                  className="flex items-center gap-2 px-5 py-2.5 pr-8 text-[13px] text-white/55 transition active:bg-white/5 active:text-white"
+                                  aria-current={selected ? "page" : undefined}
+                                  className={cn(
+                                    "flex items-center gap-2 px-5 py-2.5 pr-8 text-[13px] transition active:bg-white/5",
+                                    selected
+                                      ? "bg-white/10 font-semibold text-white"
+                                      : "text-white/55 active:text-white",
+                                  )}
                                 >
                                   <span className="size-1 shrink-0 rounded-full bg-copper/70" />
                                   <span className="truncate">{child.nameFa}</span>
-                                  {typeof child.productCount === "number" ? (
-                                    <span className="mr-auto text-[10px] text-white/30">
-                                      {formatNumberFa(child.productCount)}
-                                    </span>
-                                  ) : null}
                                 </Link>
                               </li>
-                            ))}
+                            );
+                            })}
                           </ul>
                         </div>
                       </div>

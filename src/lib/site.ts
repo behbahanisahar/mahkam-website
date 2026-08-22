@@ -18,6 +18,19 @@ export function getSiteName(): string {
   return process.env.NEXT_PUBLIC_SITE_NAME?.trim() || "گسترش سیم و کابل مهکام";
 }
 
+/** Public Telegram channel — https://t.me/mahkamcable */
+export const TELEGRAM_HANDLE = "mahkamcable";
+
+export function getTelegramUrl(): string {
+  const fromEnv = process.env.TELEGRAM_URL?.trim();
+  if (fromEnv) return fromEnv;
+  return `https://t.me/${TELEGRAM_HANDLE}`;
+}
+
+export function getTelegramHandleLabel(): string {
+  return `@${TELEGRAM_HANDLE}`;
+}
+
 export function absoluteUrl(path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const base = getSiteUrl();

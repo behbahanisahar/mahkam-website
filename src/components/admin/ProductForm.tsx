@@ -36,13 +36,6 @@ export function ProductForm({
 
         <label className="block text-sm">
           نام محصول
-          <span className="mt-0.5 block text-xs text-muted">
-            ترتیب درست مثل ورد روی صفحه: تعداد رشته × سطح مقطع — مثال{" "}
-            <span dir="ltr" className="cable-size font-semibold text-ink">
-              1×0.75
-            </span>
-            {" "}نه 0.75×1. ذخیره خودکار اصلاح می‌شود.
-          </span>
           <input
             name="nameFa"
             required
@@ -90,7 +83,7 @@ export function ProductForm({
         </label>
 
         <label className="block text-sm">
-          ساختار سیم
+          ساختار کابل
           <span className="mt-0.5 block text-xs text-muted">
             در صورت نیاز فرمول ساختار را هم در همین بخش بنویسید
           </span>

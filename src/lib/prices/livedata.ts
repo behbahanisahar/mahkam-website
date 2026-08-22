@@ -4,7 +4,14 @@ import { CACHE_TAGS, REVALIDATE } from "@/lib/cache";
 export type LiveDataRate = {
   id: string;
   label: string;
+  /** آخرین نرخ */
   value: number;
+  /** قیمت روز قبل (برای مقایسه) */
+  previous: number;
+  /** بالاترین امروز */
+  high: number;
+  /** پایین‌ترین امروز */
+  low: number;
   change: number;
   changePct: string;
   unit: string;
@@ -20,7 +27,8 @@ export type LiveDataResult = {
 };
 
 const RATE_CONFIG = [
-  { id: "200101", label: "دلار صرافی", unit: "تومان" },
+  // دلار تتر معمولاً خرید/فروش و تغییر روز قبل را زنده‌تر دارد
+  { id: "200103", label: "دلار آزاد", unit: "تومان" },
   { id: "301006", label: "مس", unit: "دلار/تن" },
   { id: "300606", label: "آلومینیوم", unit: "دلار/تن" },
 ] as const;
@@ -38,6 +46,7 @@ function parseLiveDataPayload(text: string): Record<string, string | number> | n
 export async function fetchLiveDataRatesUncached(): Promise<LiveDataResult> {
   const fetchedAt = new Date().toISOString();
   try {
+    // API / cron: always fresh. Page renders must use getLiveDataRates() (ISR-safe).
     const res = await fetch("https://www.livedata.ir/main/static/w.js", {
       cache: "no-store",
       headers: {
@@ -56,12 +65,28 @@ export async function fetchLiveDataRatesUncached(): Promise<LiveDataResult> {
       const change = Number(payload[`c_${cfg.id}`]);
       const changePct = String(payload[`cp_${cfg.id}`] ?? "");
       const updatedAt = String(payload[`td_${cfg.id}`] ?? "");
+      const prevRaw = Number(payload[`b_${cfg.id}`]);
+      const highRaw = Number(payload[`h_${cfg.id}`]);
+      const lowRaw = Number(payload[`l_${cfg.id}`]);
+      const safeValue = Number.isFinite(value) ? value : 0;
+      const safeChange = Number.isFinite(change) ? change : 0;
+      // لایودیتا: b_ ≈ قیمت روز قبل؛ در غیر این صورت از change برمی‌گردانیم
+      const previous =
+        Number.isFinite(prevRaw) && prevRaw > 0
+          ? prevRaw
+          : safeValue - safeChange;
+      const high =
+        Number.isFinite(highRaw) && highRaw > 0 ? highRaw : safeValue;
+      const low = Number.isFinite(lowRaw) && lowRaw > 0 ? lowRaw : safeValue;
 
       return {
         id: cfg.id,
         label: cfg.label,
-        value: Number.isFinite(value) ? value : 0,
-        change: Number.isFinite(change) ? change : 0,
+        value: safeValue,
+        previous: previous > 0 ? previous : safeValue,
+        high,
+        low,
+        change: safeChange,
         changePct,
         unit: cfg.unit,
         updatedAt: updatedAt || undefined,
@@ -82,17 +107,15 @@ export async function fetchLiveDataRatesUncached(): Promise<LiveDataResult> {
 
 const getCachedLiveDataRates = unstable_cache(
   fetchLiveDataRatesUncached,
-  ["livedata-rates-v2"],
+  ["livedata-rates-v3"],
   { revalidate: REVALIDATE.snapshots, tags: [CACHE_TAGS.snapshots] },
 );
 
-/** Prefer cache, but never stick on an empty failure for the full revalidate window. */
+/**
+ * ISR-safe rates for public pages. Empty results fall through to DB snapshots
+ * at the call site — do not call fetchLiveDataRatesUncached from pages
+ * (that would force dynamic rendering via cache: "no-store").
+ */
 export async function getLiveDataRates(): Promise<LiveDataResult> {
-  try {
-    const cached = await getCachedLiveDataRates();
-    if (cached.rates.length > 0) return cached;
-  } catch {
-    // fall through
-  }
-  return fetchLiveDataRatesUncached();
+  return getCachedLiveDataRates();
 }

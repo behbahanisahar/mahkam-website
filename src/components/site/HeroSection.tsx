@@ -2,8 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const HERO_IMAGES = {
-  factoryDesk: "/images/hero-shining-night.webp",
-  factoryMobile: "/images/hero-shining-night.webp",
+  factoryDesk: "/images/hero-shining-night-1920.webp",
+  /** Lighter master for future art-direction; homepage uses the 1920 via Next sizes. */
+  factoryMobile: "/images/hero-shining-night-1080.webp",
   crossSection: "/images/section-cable-cross.jpg",
   conduit: "/images/section-conduit.jpg",
   cool: "/images/section-infra.jpg",
@@ -24,7 +25,7 @@ export function HeroSection({ telegramUrl: _telegramUrl }: Props) {
           fill
           priority
           fetchPriority="high"
-          quality={90}
+          quality={75}
           className="object-cover object-[62%_45%]"
           sizes="100vw"
         />
@@ -51,7 +52,7 @@ export function HeroSection({ telegramUrl: _telegramUrl }: Props) {
         </span>
       </Link>
 
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center justify-center px-5 pb-44 pt-28 text-center sm:px-8 sm:pb-48 lg:pb-56">
+      <div className="relative z-10 mx-auto flex min-h-screen min-h-[100lvh] max-w-4xl flex-col items-center justify-center px-5 pb-44 pt-28 text-center sm:px-8 sm:pb-48 lg:pb-56">
         <h1 className="brand-display animate-fade-up text-[clamp(2.4rem,7vw,4.75rem)] font-black tracking-[0.14em] text-white">
           مهکام
         </h1>

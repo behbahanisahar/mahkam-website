@@ -48,3 +48,4 @@ next-env.d.ts
 .data/
 mahkam-deploy.tar.gz
 public/images/catalog-raw/
+scripts/.cutout-jobs.json

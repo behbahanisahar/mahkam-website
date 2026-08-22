@@ -26,6 +26,12 @@ const RATE_THEME: Record<
     bar: string;
   }
 > = {
+  "200103": {
+    icon: CircleDollarSign,
+    label: "ارز",
+    accent: "text-emerald-300",
+    bar: "bg-emerald-400",
+  },
   "200101": {
     icon: CircleDollarSign,
     label: "ارز",
@@ -94,33 +100,99 @@ function LiveNumber({ value, decimals = 0 }: { value: number; decimals?: number 
   return <span className="tabular-nums">{shown}</span>;
 }
 
+function formatMoney(value: number, unit: string) {
+  if (unit === "تومان") return formatNumberFa(Math.round(value));
+  return formatNumberFa(Number(value.toFixed(2)));
+}
+
 function ChangePill({ rate }: { rate: LiveDataRate }) {
   const isUp = rate.change > 0;
   const isDown = rate.change < 0;
-  const pct = rate.changePct ? toPersianDigits(rate.changePct) : null;
+  const pctRaw = rate.changePct?.trim() || "";
+  const pct = pctRaw ? toPersianDigits(pctRaw) : null;
+  const amount = formatChangeAmount(rate);
 
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold sm:px-2.5 sm:py-1 sm:text-[11px]",
+        "inline-flex shrink-0 flex-col items-end gap-0.5 rounded-xl px-2.5 py-1.5 text-end",
         isUp && "bg-emerald-400/20 text-emerald-300",
         isDown && "bg-rose-400/20 text-rose-300",
         !isUp && !isDown && "bg-white/10 text-white/70",
       )}
     >
-      {isUp ? (
-        <TrendingUp className="size-3 sm:size-3.5" />
-      ) : isDown ? (
-        <TrendingDown className="size-3 sm:size-3.5" />
-      ) : (
-        <Minus className="size-3 sm:size-3.5" />
-      )}
-      <span className="whitespace-nowrap">
-        {isUp ? "+" : isDown ? "−" : ""}
-        {formatChangeAmount(rate)}
-        {pct ? ` (${pct})` : ""}
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold sm:text-xs">
+        {isUp ? (
+          <TrendingUp className="size-3.5" />
+        ) : isDown ? (
+          <TrendingDown className="size-3.5" />
+        ) : (
+          <Minus className="size-3.5" />
+        )}
+        <span className="tabular-nums">
+          {pct ?? (isUp || isDown ? `${isUp ? "+" : "−"}${amount}` : "۰٪")}
+        </span>
       </span>
+      <span className="text-[10px] font-medium text-white/55">نسبت به دیروز</span>
     </span>
+  );
+}
+
+function DayCompareRow({ rate }: { rate: LiveDataRate }) {
+  const isUp = rate.change > 0;
+  const isDown = rate.change < 0;
+  const showRange = rate.high !== rate.low;
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-2">
+          <p className="text-[10px] font-semibold text-white/50">امروز</p>
+          <p className="mt-0.5 text-sm font-bold tabular-nums text-white">
+            {formatMoney(rate.value, rate.unit)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-2">
+          <p className="text-[10px] font-semibold text-white/50">دیروز</p>
+          <p className="mt-0.5 text-sm font-bold tabular-nums text-white/80">
+            {formatMoney(rate.previous, rate.unit)}
+          </p>
+        </div>
+      </div>
+      {showRange ? (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
+            <p className="text-[10px] text-white/45">بالاترین امروز</p>
+            <p className="text-xs font-semibold tabular-nums text-white/85">
+              {formatMoney(rate.high, rate.unit)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] px-2.5 py-1.5">
+            <p className="text-[10px] text-white/45">پایین‌ترین امروز</p>
+            <p className="text-xs font-semibold tabular-nums text-white/85">
+              {formatMoney(rate.low, rate.unit)}
+            </p>
+          </div>
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          "flex items-center justify-between rounded-xl border px-2.5 py-2 text-[11px] font-semibold",
+          isUp && "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+          isDown && "border-rose-400/25 bg-rose-400/10 text-rose-300",
+          !isUp && !isDown && "border-white/10 bg-white/[0.04] text-white/65",
+        )}
+      >
+        <span>تغییر نسبت به روز قبل</span>
+        <span className="tabular-nums">
+          {isUp ? "+" : isDown ? "−" : ""}
+          {formatChangeAmount(rate)}
+          {rate.changePct?.trim()
+            ? ` · ${toPersianDigits(rate.changePct.trim())}`
+            : ""}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -132,21 +204,26 @@ function RateRowMobile({ rate }: { rate: LiveDataRate }) {
   const decimals = rate.unit === "تومان" ? 0 : 2;
 
   return (
-    <article className="flex items-center gap-3 border-b border-white/8 px-3.5 py-3.5 last:border-b-0">
-      <span className={cn("h-10 w-1 shrink-0 rounded-full", theme.bar)} aria-hidden />
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
-        <Icon className="size-4" strokeWidth={1.75} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-sm font-bold text-white">{rate.label}</p>
-          <ChangePill rate={rate} />
-        </div>
-        <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
-          <p className="brand-display text-xl font-extrabold leading-none text-white">
-            <LiveNumber value={main} decimals={decimals} />
-          </p>
-          <span className="text-[11px] text-white/45">{rate.unit}</span>
+    <article className="border-b border-white/8 px-3.5 py-3.5 last:border-b-0">
+      <div className="flex items-start gap-3">
+        <span className={cn("mt-1 h-10 w-1 shrink-0 rounded-full", theme.bar)} aria-hidden />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
+          <Icon className="size-4" strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-white">{rate.label}</p>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
+                <p className="brand-display text-xl font-extrabold leading-none text-white">
+                  <LiveNumber value={main} decimals={decimals} />
+                </p>
+                <span className="text-[11px] text-white/45">{rate.unit}</span>
+              </div>
+            </div>
+            <ChangePill rate={rate} />
+          </div>
+          <DayCompareRow rate={rate} />
         </div>
       </div>
     </article>
@@ -185,6 +262,8 @@ function RateCardDesktop({ rate, index }: { rate: LiveDataRate; index: number })
         </p>
         <span className="text-sm font-medium text-white/50">{rate.unit}</span>
       </div>
+
+      <DayCompareRow rate={rate} />
 
       {rate.updatedAt ? (
         <p className="mt-auto pt-5 text-[11px] text-white/40">
@@ -246,10 +325,15 @@ export function LivePricesStrip({
 
   useEffect(() => {
     let cancelled = false;
-    void (async () => {
-      if (cancelled) return;
-      await load();
-    })();
+    const hasWarmInitial = Boolean(initial?.rates?.length);
+    if (hasWarmInitial) {
+      setNextRefreshAt(Date.now() + REFRESH_MS);
+    } else {
+      void (async () => {
+        if (cancelled) return;
+        await load();
+      })();
+    }
     const id = window.setInterval(() => {
       if (!cancelled) void load();
     }, REFRESH_MS);
@@ -415,7 +499,7 @@ export function LivePricesStrip({
         )}
 
         <p className="mt-5 text-center text-[10px] text-white/35 sm:mt-6 sm:text-[11px]">
-          تغییرات نسبت به روز قبل · منبع:{" "}
+          مقایسه با روز قبل (مبلغ و درصد) برای دلار، مس و آلومینیوم · منبع:{" "}
           <a
             href="https://www.livedata.ir"
             target="_blank"

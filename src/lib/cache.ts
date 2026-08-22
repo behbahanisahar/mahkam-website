@@ -11,7 +11,7 @@ export const REVALIDATE = {
   settings: 3600,
   snapshots: 300,
   popular: 600,
-  categories: 3600,
+  categories: 300,
   catalog: 300,
   product: 600,
   page: 300,

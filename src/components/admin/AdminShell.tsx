@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/site/Logo";
@@ -23,6 +24,7 @@ const nav = [
   { href: "/admin/products", label: "محصولات", icon: Package },
   { href: "/admin/categories", label: "دسته‌ها", icon: Folders },
   { href: "/admin/prices", label: "نرخ‌ها", icon: LineChart },
+  { href: "/admin/errors", label: "خطاها", icon: AlertTriangle },
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },
 ];
 

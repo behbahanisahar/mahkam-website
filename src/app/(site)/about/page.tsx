@@ -10,12 +10,13 @@ import {
 import { TelegramIcon } from "@/components/site/TelegramIcon";
 import { formatNumberFa, toPersianDigits } from "@/lib/i18n/fa";
 import { getSiteSettings } from "@/lib/settings";
+import { getTelegramHandleLabel } from "@/lib/site";
+import { SITE_PAGE_META } from "@/lib/seo/site-pages";
 
-export const metadata: Metadata = {
-  title: "درباره ما",
-  description: "آشنایی با شرکت گسترش سیم و کابل مهکام؛ کیفیت، تجربه و تعهد به مشتری.",
-  alternates: { canonical: "/about" },
-};
+export const metadata: Metadata = SITE_PAGE_META.about;
+
+/** Marketing page — long ISR; settings via unstable_cache. */
+export const revalidate = 3600;
 
 const PILLARS = [
   {
@@ -188,7 +189,7 @@ export default async function AboutPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#229ED9] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1b8fc7]"
                 >
                   <TelegramIcon className="size-4" />
-                  کانال تلگرام
+                  <span dir="ltr">{getTelegramHandleLabel()}</span>
                 </a>
                 <a
                   href={telHref}

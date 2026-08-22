@@ -2,10 +2,21 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { CACHE_TAGS, REVALIDATE } from "@/lib/cache";
+import { getTelegramUrl } from "@/lib/site";
+
+const LEGACY_TELEGRAM_URL = "https://t.me/mahkam_cable";
+
+function normalizeTelegramUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === LEGACY_TELEGRAM_URL || trimmed.includes("mahkam_cable")) {
+    return getTelegramUrl();
+  }
+  return trimmed;
+}
 
 const defaults = {
   id: "default",
-  telegramUrl: process.env.TELEGRAM_URL ?? "https://t.me/mahkam_cable",
+  telegramUrl: getTelegramUrl(),
   phones: ["02166349014"] as string[],
   address: "تهران، خیابان لاله‌زار نو، کوچه معمار مخصوص، پاساژ چلچراغ، طبقه ۴، واحد ۱۰" as string | null,
   /** پاساژ چلچراغ — from Balad place pin */
@@ -34,6 +45,7 @@ const getCachedSettings = unstable_cache(
           : defaults.address;
       return {
         ...settings,
+        telegramUrl: normalizeTelegramUrl(settings.telegramUrl),
         phones: phones.length > 0 ? phones : defaults.phones,
         address,
         mapLat: settings.mapLat ?? defaults.mapLat,

@@ -5,42 +5,39 @@ import { ArrowLeft, Send } from "lucide-react";
 import { LivePricesStrip } from "@/components/prices/LivePricesStrip";
 import { DollarHistoryLookup } from "@/components/prices/DollarHistoryLookup";
 import { SiteContainer } from "@/components/site/SiteContainer";
-import { prisma, withDbTimeout } from "@/lib/prisma";
+import { withDbTimeout } from "@/lib/prisma";
 import { formatNumberFa, formatRial, toPersianDigits } from "@/lib/i18n/fa";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getSiteSettings } from "@/lib/settings";
+import { getTelegramHandleLabel } from "@/lib/site";
 import { getLiveDataRates } from "@/lib/prices/livedata";
-import { snapshotsAsLiveDataFallback } from "@/lib/prices/snapshots";
+import {
+  getDollarArchivePickerDates,
+  getRecentDollarArchive,
+  snapshotsAsLiveDataFallback,
+} from "@/lib/prices/snapshots";
+import { SITE_PAGE_META } from "@/lib/seo/site-pages";
 
-export const metadata: Metadata = {
-  title: "نرخ دلار، مس و آلومینیوم",
-  description:
-    "مشاهده نرخ لحظه‌ای دلار، مس و آلومینیوم از لایودیتا و جستجوی قیمت تاریخی دلار بر اساس تاریخ شمسی.",
-  alternates: { canonical: "/prices" },
-};
+export const metadata: Metadata = SITE_PAGE_META.prices;
 
 export const revalidate = 300;
 
 async function RecentDollarArchive() {
-  let recent: Awaited<ReturnType<typeof prisma.dollarDaily.findMany>> = [];
+  let recent: Awaited<ReturnType<typeof getRecentDollarArchive>> = [];
   let dbError = false;
 
   try {
-    recent = await withDbTimeout(
-      prisma.dollarDaily.findMany({
-        orderBy: { date: "desc" },
-        take: 10,
-      }),
-      2_500,
-      [],
-    );
+    recent = await withDbTimeout(getRecentDollarArchive(), 2_500, []);
   } catch {
     dbError = true;
   }
   return (
     <section className="ui-card overflow-hidden">
       <div className="border-b border-glass-border px-5 py-4">
-        <h2 className="font-semibold text-ink">آخرین روزهای ثبت‌شده دلار</h2>
+        <h2 className="font-semibold text-ink">۱۰ روز اخیر قیمت‌های ثبت‌شده</h2>
+        <p className="mt-1 text-xs text-muted">
+          ده روز آخر آرشیو دلار — برای تاریخ قدیمی‌تر از انتخابگر تاریخ بالا استفاده کنید.
+        </p>
       </div>
       {dbError ? (
         <p className="p-5 text-sm leading-7 text-muted">
@@ -83,9 +80,10 @@ async function RecentDollarArchive() {
 }
 
 export default async function PricesPage() {
-  const [settings, liveRates] = await Promise.all([
+  const [settings, liveRates, pickerDates] = await Promise.all([
     getSiteSettings(),
     getLiveDataRates().catch(() => ({ rates: [], fetchedAt: new Date().toISOString() })),
+    withDbTimeout(getDollarArchivePickerDates(), 3_000, []).catch(() => []),
   ]);
   const initialPrices =
     liveRates.rates.length > 0
@@ -115,12 +113,47 @@ export default async function PricesPage() {
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#229ED9] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1b8fc7]"
           >
             <Send className="size-4" />
-            کانال تلگرام
+            <span dir="ltr">{getTelegramHandleLabel()}</span>
             <ArrowLeft className="size-4" />
           </a>
         </div>
 
-        <DollarHistoryLookup />
+        <section className="rounded-3xl border border-ink/8 bg-white p-6 sm:p-7">
+          <h2 className="brand-display text-xl font-extrabold text-ink sm:text-2xl">
+            قیمت مس و آلومینیوم برای خریداران سیم و کابل
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-8 text-muted sm:text-base">
+            بسیاری از خریداران هر روز «قیمت مس» و «قیمت آلومینیوم» را چک می‌کنند چون روی قیمت سیم
+            مسی، کابل افشان و کابل آلومینیوم اثر مستقیم دارد. در مهکام نرخ مرجع فلزات را از لایودیتا
+            می‌بینید و برای «خرید مس و آلومینیوم» به‌معنای خرید محصول نهایی (سیم و کابل)، لیست قیمت
+            همکاری را از تلگرام یا دفتر لاله‌زار بگیرید.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3 text-sm">
+            <Link href="/price-list/sim-mesi" className="font-semibold text-copper hover:underline">
+              سیم مسی مهکام
+            </Link>
+            <Link
+              href="/price-list/cable-aluminum"
+              className="font-semibold text-copper hover:underline"
+            >
+              کابل آلومینیوم
+            </Link>
+            <Link
+              href="/price-list/sim-afshan"
+              className="font-semibold text-copper hover:underline"
+            >
+              کابل / سیم افشان
+            </Link>
+            <Link
+              href="/price-list/sim-afshan-earth"
+              className="font-semibold text-copper hover:underline"
+            >
+              کابل ارت افشان
+            </Link>
+          </div>
+        </section>
+
+        <DollarHistoryLookup availableDates={pickerDates} />
 
         <Suspense
           fallback={
@@ -134,6 +167,11 @@ export default async function PricesPage() {
         </Suspense>
 
         <p className="text-center text-sm text-muted">
+          لیست قیمت محصولات:{" "}
+          <Link href="/price-list" className="font-semibold text-copper hover:underline">
+            سیم افشان و کابل آلومینیوم مهکام
+          </Link>
+          {" · "}
           سوال دارید؟{" "}
           <Link href="/faq" className="font-semibold text-copper hover:underline">
             سوالات متداول

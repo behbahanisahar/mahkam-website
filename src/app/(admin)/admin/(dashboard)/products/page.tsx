@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { prisma, withDbTimeout } from "@/lib/prisma";
@@ -7,17 +8,41 @@ import { deleteProductAction } from "@/lib/actions/admin";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { AdminDbNotice } from "@/components/admin/AdminDbNotice";
 import { AdminImageDownloadButton } from "@/components/admin/AdminImageDownloadButton";
+import { AdminPagination } from "@/components/admin/AdminPagination";
 import { AdminProductSearch } from "@/components/admin/AdminProductSearch";
 import { shouldBypassImageOptimizer } from "@/lib/utils";
 import { LtrAwareText } from "@/components/ui/LtrAwareText";
 import { formatNumberFa } from "@/lib/i18n/fa";
 import { toLatinDigits } from "@/lib/products/cable-title";
 
+const PAGE_SIZE = 20;
+
 type SearchParams = Promise<{
   q?: string;
   category?: string;
   status?: string;
+  page?: string;
 }>;
+
+function parsePage(raw: string | undefined): number {
+  const n = Number.parseInt(raw ?? "1", 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+function productsHref(params: {
+  q?: string;
+  category?: string;
+  status?: string;
+  page?: number;
+}) {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set("q", params.q);
+  if (params.category) sp.set("category", params.category);
+  if (params.status) sp.set("status", params.status);
+  if (params.page && params.page > 1) sp.set("page", String(params.page));
+  const qs = sp.toString();
+  return qs ? `/admin/products?${qs}` : "/admin/products";
+}
 
 function searchVariants(q: string): string[] {
   const trimmed = q.trim();
@@ -40,30 +65,35 @@ function buildWhere(filters: {
         ? false
         : null;
 
-  return {
-    ...(status !== null ? { isPublished: status } : {}),
-    ...(filters.categoryId
-      ? {
+  const and: Prisma.ProductWhereInput[] = [];
+
+  if (status !== null) and.push({ isPublished: status });
+
+  if (filters.categoryId) {
+    and.push({
+      OR: [
+        { categoryId: filters.categoryId },
+        { category: { parentId: filters.categoryId } },
+      ],
+    });
+  }
+
+  if (variants.length) {
+    and.push({
+      OR: variants.flatMap((v) => [
+        { nameFa: { contains: v, mode: "insensitive" as const } },
+        { slug: { contains: v, mode: "insensitive" as const } },
+        { introduction: { contains: v, mode: "insensitive" as const } },
+        {
           category: {
-            OR: [{ id: filters.categoryId }, { parentId: filters.categoryId }],
+            nameFa: { contains: v, mode: "insensitive" as const },
           },
-        }
-      : {}),
-    ...(variants.length
-      ? {
-          OR: variants.flatMap((v) => [
-            { nameFa: { contains: v, mode: "insensitive" as const } },
-            { slug: { contains: v, mode: "insensitive" as const } },
-            { introduction: { contains: v, mode: "insensitive" as const } },
-            {
-              category: {
-                nameFa: { contains: v, mode: "insensitive" as const },
-              },
-            },
-          ]),
-        }
-      : {}),
-  };
+        },
+      ]),
+    });
+  }
+
+  return and.length ? { AND: and } : {};
 }
 
 export default async function AdminProductsPage({
@@ -75,8 +105,10 @@ export default async function AdminProductsPage({
   const q = (sp.q ?? "").trim();
   const categoryId = (sp.category ?? "").trim();
   const status = (sp.status ?? "").trim();
+  const requestedPage = parsePage(sp.page);
   const where = buildWhere({ q, categoryId, status });
   const hasFilters = Boolean(q || categoryId || status);
+  const filterParams = { q, category: categoryId, status };
 
   const result = await withDbTimeout(
     Promise.all([
@@ -87,12 +119,15 @@ export default async function AdminProductsPage({
           images: { take: 1, orderBy: { sortOrder: "asc" } },
         },
         orderBy: { updatedAt: "desc" },
+        skip: (requestedPage - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
       }),
+      prisma.product.count({ where }),
+      prisma.product.count(),
       prisma.category.findMany({
         orderBy: [{ sortOrder: "asc" }, { nameFa: "asc" }],
         select: { id: true, nameFa: true, parentId: true },
       }),
-      prisma.product.count(),
     ]),
     4_000,
     null,
@@ -100,8 +135,18 @@ export default async function AdminProductsPage({
 
   const dbError = result === null;
   const products = result?.[0] ?? [];
-  const categories = result?.[1] ?? [];
+  const filteredTotal = result?.[1] ?? 0;
   const totalAll = result?.[2] ?? 0;
+  const categories = result?.[3] ?? [];
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+
+  if (!dbError && requestedPage > totalPages) {
+    redirect(productsHref({ ...filterParams, page: totalPages }));
+  }
+
+  const page = Math.min(requestedPage, totalPages);
+  const from = filteredTotal === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, filteredTotal);
 
   return (
     <div className="space-y-5">
@@ -130,13 +175,16 @@ export default async function AdminProductsPage({
         />
       ) : null}
 
-      {!dbError && hasFilters ? (
+      {!dbError && filteredTotal > 0 ? (
         <p className="text-sm text-muted">
-          {formatNumberFa(products.length)} نتیجه
-          {totalAll > 0 ? (
+          نمایش {formatNumberFa(from)} تا {formatNumberFa(to)} از {formatNumberFa(filteredTotal)} محصول
+          {hasFilters && totalAll > filteredTotal ? (
+            <> (از {formatNumberFa(totalAll)})</>
+          ) : null}
+          {totalPages > 1 ? (
             <>
               {" "}
-              از {formatNumberFa(totalAll)} محصول
+              — صفحه {formatNumberFa(page)} از {formatNumberFa(totalPages)}
             </>
           ) : null}
           {q ? (
@@ -325,6 +373,13 @@ export default async function AdminProductsPage({
               </tbody>
             </table>
           </div>
+
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            basePath="/admin/products"
+            baseParams={filterParams}
+          />
         </>
       ) : null}
     </div>

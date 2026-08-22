@@ -3,10 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # So `next build` can reach host Postgres at 127.0.0.1 during prerender.
+      network: host
       args:
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://mahkamcable.ir}
         NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-گسترش سیم و کابل مهکام}
-        NEXT_PUBLIC_HERO_IMAGE: ${NEXT_PUBLIC_HERO_IMAGE:-/images/hero-minimal.webp}
+        NEXT_PUBLIC_HERO_IMAGE: ${NEXT_PUBLIC_HERO_IMAGE:-/images/hero-shining-night-1920.webp}
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
         DATABASE_URL: ${DATABASE_URL}
     container_name: mahkam-website
     restart: unless-stopped

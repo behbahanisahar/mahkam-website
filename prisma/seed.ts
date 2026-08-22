@@ -39,7 +39,7 @@ async function main() {
     where: { id: "default" },
     create: {
       id: "default",
-      telegramUrl: process.env.TELEGRAM_URL ?? "https://t.me/mahkam_cable",
+      telegramUrl: process.env.TELEGRAM_URL ?? "https://t.me/mahkamcable",
       phones: ["02166349014"],
       address: "تهران، خیابان لاله‌زار نو، کوچه معمار مخصوص، پاساژ چلچراغ، طبقه ۴، واحد ۱۰",
       mapLat: 35.700348,

@@ -8,8 +8,10 @@ Server IP: `85.208.255.211`
 Internet
   ↓
 Nginx
-  ├── /uploads/*  → alias /var/www/mahkam-uploads/*
-  └── everything else → Next.js :3000 (Docker Compose)
+  ├── /uploads/*       → alias /var/www/mahkam-uploads/*
+  ├── /_next/static/*  → Next :3000 (long cache)
+  ├── /images/*        → Next :3000 (long cache)
+  └── everything else  → Next.js :3000 (Docker Compose)
 ```
 
 ## Product uploads (add to the live .com server block now)
@@ -28,6 +30,47 @@ location /uploads/ {
     location ~* \.(php|exe|sh|cgi)$ { deny all; }
 }
 
+# Public catalog / hero / section images — serve from disk (skip Node)
+# APP_DIR is usually /var/www/mahkam-website
+location ^~ /images/ {
+    alias /var/www/mahkam-website/public/images/;
+    access_log off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    add_header X-Content-Type-Options nosniff;
+    try_files $uri @next_images;
+}
+
+# Fallback if a file is missing from the host bind (e.g. only inside Docker)
+location @next_images {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    access_log off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+}
+
+# Hashed Next build assets — long cache at the edge
+location ^~ /_next/static/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    access_log off;
+    expires 1y;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+}
+
+# Persistent product images — NOT proxied through Next.js
+location /uploads/ {
+    alias /var/www/mahkam-uploads/;
+    access_log off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    add_header X-Content-Type-Options nosniff;
+    location ~* \.(php|exe|sh|cgi)$ { deny all; }
+}
+
 location / {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
@@ -35,7 +78,18 @@ location / {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_intercept_errors on;
 }
+
+# Static friendly pages when Next/Docker is down (502/503/504)
+location ^~ /errors/ {
+    alias /var/www/mahkam-website/public/errors/;
+    default_type text/html;
+    charset utf-8;
+    access_log off;
+}
+
+error_page 502 503 504 /errors/offline.html;
 ```
 
 **Trailing slash note:** `location /uploads/` + `alias /var/www/mahkam-uploads/;` maps

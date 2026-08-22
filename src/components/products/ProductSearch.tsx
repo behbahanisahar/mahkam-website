@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Loader2, Search } from "lucide-react";
+import { Select, type SelectGroup, type SelectOption } from "@/components/ui/Select";
+import { toast } from "@/components/ui/Toaster";
 
 export type CategoryOption = {
   slug: string;
@@ -27,16 +29,50 @@ export function ProductSearch({
   const [conductor, setConductor] = useState(initialConductor);
   const [pending, startTransition] = useTransition();
 
-  function apply(e?: React.FormEvent) {
-    e?.preventDefault();
+  useEffect(() => {
+    setQ(initialQ);
+    setCategory(initialCategory);
+    setConductor(initialConductor);
+  }, [initialQ, initialCategory, initialConductor]);
+
+  const categoryGroups = useMemo<SelectGroup[]>(() => {
+    return categories.map((c) =>
+      c.children && c.children.length > 0
+        ? {
+            label: c.nameFa,
+            options: [
+              { value: c.slug, label: `همهٔ ${c.nameFa}` },
+              ...c.children.map((child) => ({ value: child.slug, label: child.nameFa })),
+            ],
+          }
+        : { label: "", options: [{ value: c.slug, label: c.nameFa }] },
+    );
+  }, [categories]);
+
+  const conductorOptions: SelectOption[] = [
+    { value: "", label: "همه هادی‌ها" },
+    { value: "مس", label: "مس" },
+    { value: "آلومینیوم", label: "آلومینیوم" },
+  ];
+
+  function navigate(next: { q?: string; category?: string; conductor?: string }) {
     const params = new URLSearchParams();
-    if (q.trim()) params.set("q", q.trim());
-    if (category) params.set("category", category);
-    if (conductor) params.set("conductor", conductor);
+    const qv = (next.q ?? q).trim();
+    const cat = next.category ?? category;
+    const cond = next.conductor ?? conductor;
+    if (qv) params.set("q", qv);
+    if (cat) params.set("category", cat);
+    if (cond) params.set("conductor", cond);
     const qs = params.toString();
     startTransition(() => {
       router.push(qs ? `/products?${qs}` : "/products");
     });
+  }
+
+  function apply(e?: React.FormEvent) {
+    e?.preventDefault();
+    navigate({});
+    toast("فیلتر کاتالوگ اعمال شد.", { type: "success" });
   }
 
   return (
@@ -52,40 +88,30 @@ export function ProductSearch({
             className="w-full rounded-xl border border-glass-border bg-bg py-2.5 pr-10 pl-3 text-sm outline-none transition focus:border-copper focus:ring-2 focus:ring-copper/20 disabled:opacity-70"
           />
         </div>
-        <select
+        <Select
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(value) => {
+            setCategory(value);
+            navigate({ category: value });
+          }}
           disabled={pending}
-          className="rounded-xl border border-glass-border bg-white py-2.5 pr-3 pl-10 text-sm disabled:opacity-70"
-        >
-          <option value="">همه دسته‌ها</option>
-          {categories.map((c) =>
-            c.children && c.children.length > 0 ? (
-              <optgroup key={c.slug} label={c.nameFa}>
-                <option value={c.slug}>همهٔ {c.nameFa}</option>
-                {c.children.map((child) => (
-                  <option key={child.slug} value={child.slug}>
-                    {child.nameFa}
-                  </option>
-                ))}
-              </optgroup>
-            ) : (
-              <option key={c.slug} value={c.slug}>
-                {c.nameFa}
-              </option>
-            ),
-          )}
-        </select>
-        <select
+          className="md:w-56"
+          placeholder="همه دسته‌ها"
+          aria-label="دسته‌بندی"
+          options={[{ value: "", label: "همه دسته‌ها" }]}
+          groups={categoryGroups.filter((g) => g.options.length > 0)}
+        />
+        <Select
           value={conductor}
-          onChange={(e) => setConductor(e.target.value)}
+          onChange={(value) => {
+            setConductor(value);
+            navigate({ conductor: value });
+          }}
           disabled={pending}
-          className="rounded-xl border border-glass-border bg-white py-2.5 pr-3 pl-10 text-sm disabled:opacity-70"
-        >
-          <option value="">همه هادی‌ها</option>
-          <option value="مس">مس</option>
-          <option value="آلومینیوم">آلومینیوم</option>
-        </select>
+          className="md:w-40"
+          options={conductorOptions}
+          aria-label="هادی"
+        />
         <button
           type="submit"
           disabled={pending}

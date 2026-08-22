@@ -36,10 +36,10 @@ model Product {
   slug           String         @unique
   /// Card / SEO summary (optional; falls back to introduction)
   shortDesc      String?
-  body           String?
+  body           String?        @db.Text
   /// معرفی محصول
   introduction   String?        @db.Text
-  /// ساختار سیم
+  /// ساختار کابل
   wireStructure  String?        @db.Text
   /// مشخصات فنی (متن آزاد؛ جدول کلید/مقدار جدا در specs)
   techSpecs      String?        @db.Text
@@ -49,7 +49,7 @@ model Product {
   advantages     String?        @db.Text
   specs          Json?
   conductor      String?
-  application    String?
+  application    String?        @db.Text
   seoTitle       String?
   seoDescription String?
   isPublished    Boolean        @default(false)
@@ -99,7 +99,7 @@ model ProductView {
 
 model SiteSetting {
   id           String   @id @default("default")
-  telegramUrl  String   @default("https://t.me/mahkam_cable")
+  telegramUrl  String   @default("https://t.me/mahkamcable")
   phones       String[] @default([])
   address      String?
   /// Exact map pin (WGS84)
@@ -141,4 +141,27 @@ model DollarDaily {
   updatedAt  DateTime @updatedAt
 
   @@index([dateJalali])
+}
+
+/// Client/server runtime errors surfaced in admin
+model AppErrorLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  /// error | warning | offline
+  level      String   @default("error")
+  /// client | server | gateway | unknown
+  source     String   @default("unknown")
+  statusCode Int?
+  message    String
+  digest     String?
+  path       String?
+  userAgent  String?
+  stack      String?  @db.Text
+  meta       Json?
+  resolved   Boolean  @default(false)
+  resolvedAt DateTime?
+
+  @@index([createdAt])
+  @@index([resolved, createdAt])
+  @@index([source, createdAt])
 }

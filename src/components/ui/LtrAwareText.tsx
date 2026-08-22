@@ -1,29 +1,24 @@
 import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { normalizeCableTitle } from "@/lib/products/cable-title";
+import {
+  CABLE_LTR_TOKEN_RE,
+  normalizeCableTitle,
+} from "@/lib/products/cable-title";
 
 /**
- * Product / catalog titles in RTL UI:
- * - Persian words flow right-to-left
- * - Cable sizes like 1×0.75 stay left-to-right (never flip to 0.75×1)
- * - Word-stored section×1 is normalized to cores×section for display
+ * Persian copy stays RTL. Cable numbers (cores×section, +neutral, voltages)
+ * are isolated left-to-right so 1×0.75 and 3×25+16 never flip.
  */
-const DIGIT = "[0-9۰-۹]";
-const SIZE_PATTERN = new RegExp(
-  `((?:${DIGIT}+(?:\\.${DIGIT}+)?)\\s*[×xX]\\s*(?:${DIGIT}+(?:\\.${DIGIT}+)?))`,
-  "g",
-);
-
-const LRI = "\u2066";
-const PDI = "\u2069";
+const LRE = "\u202A";
+const PDF = "\u202C";
 
 function LtrSize({ children }: { children: string }) {
   return (
-    <span dir="ltr" className="cable-size">
-      {LRI}
+    <bdi dir="ltr" className="cable-size">
+      {LRE}
       {children}
-      {PDI}
-    </span>
+      {PDF}
+    </bdi>
   );
 }
 
@@ -39,7 +34,7 @@ export function LtrAwareText({
   const normalized = normalizeCableTitle(text);
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
-  const re = new RegExp(SIZE_PATTERN.source, "g");
+  const re = new RegExp(CABLE_LTR_TOKEN_RE.source, "g");
   let match: RegExpExecArray | null;
 
   while ((match = re.exec(normalized)) !== null) {

@@ -14,6 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const catalogPath = path.join(root, "prisma/data/afshan-catalog.json");
 const outDir = path.join(root, "public/images/catalog");
+const thumbDir = path.join(root, "public/images/catalog-thumbs");
 const rawDir = path.join(root, "public/images/catalog-raw");
 const logoPath = path.join(root, "public/images/mahkam-logo.png");
 const assetsDir =
@@ -177,11 +178,17 @@ async function brandOne(product) {
     .composite(composites)
     .webp({ quality: 85, effort: 4 })
     .toFile(path.join(outDir, `${product.slug}.webp`));
+
+  await sharp(path.join(outDir, `${product.slug}.webp`))
+    .resize(480, 480, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 72, effort: 4 })
+    .toFile(path.join(thumbDir, `${product.slug}.webp`));
 }
 
 async function main() {
   const products = JSON.parse(await readFile(catalogPath, "utf8"));
   await mkdir(outDir, { recursive: true });
+  await mkdir(thumbDir, { recursive: true });
 
   for (const product of products) {
     await brandOne(product);

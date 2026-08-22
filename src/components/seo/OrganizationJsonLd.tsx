@@ -1,5 +1,5 @@
 import { getSiteSettings } from "@/lib/settings";
-import { absoluteUrl, getSiteName, getSiteUrl } from "@/lib/site";
+import { absoluteUrl, getSiteName, getSiteUrl, getTelegramUrl } from "@/lib/site";
 
 export function OrganizationJsonLd() {
   const siteUrl = getSiteUrl();
@@ -8,12 +8,12 @@ export function OrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: siteName,
-    alternateName: "مهکام",
+    alternateName: ["مهکام", "Mahkam", "Mahkam Cable", "گسترش سیم و کابل مهکام"],
     url: siteUrl,
     logo: absoluteUrl("/images/mahkam-logo.png"),
     description:
       "تولیدکننده انواع سیم و کابل برق با مشخصات فنی شفاف و استعلام قیمت از کانال تلگرام.",
-    sameAs: [process.env.TELEGRAM_URL ?? "https://t.me/mahkam_cable"],
+    sameAs: [getTelegramUrl()],
   };
 
   return (
@@ -42,7 +42,7 @@ export async function LocalBusinessJsonLd() {
     "@type": "LocalBusiness",
     "@id": `${siteUrl}/#localbusiness`,
     name: siteName,
-    alternateName: "مهکام",
+    alternateName: ["مهکام", "Mahkam", "گسترش سیم و کابل مهکام"],
     url: siteUrl,
     image: absoluteUrl("/images/mahkam-logo.png"),
     logo: absoluteUrl("/images/mahkam-logo.png"),
@@ -98,6 +98,7 @@ export function WebSiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: siteName,
+    alternateName: ["مهکام", "Mahkam", "گسترش سیم و کابل مهکام"],
     url: siteUrl,
     inLanguage: "fa-IR",
     potentialAction: {

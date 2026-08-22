@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Send } from "lucide-react";
+import { getTelegramHandleLabel } from "@/lib/site";
 
 type Props = {
   href: string;
@@ -47,7 +48,7 @@ export function TelegramFab({ href }: Props) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="کانال تلگرام مهکام"
+      aria-label={`کانال تلگرام ${getTelegramHandleLabel()}`}
       className="telegram-fab fixed z-[70] hidden size-14 items-center justify-center rounded-full text-white transition-[background-color,box-shadow] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#229ED9]/40 focus-visible:ring-offset-2 lg:bottom-8 lg:end-8 lg:flex lg:size-16"
       style={{
         backgroundColor: "#229ED9",

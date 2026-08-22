@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
+    "dev": "next dev --webpack",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
@@ -12,6 +12,11 @@
     "catalog:afshan:images": "node scripts/generate-afshan-images.mjs",
     "catalog:afshan:brand": "node scripts/brand-catalog-images.mjs",
     "catalog:afshan:sync": "node scripts/sync-afshan-catalog.mjs",
+    "catalog:aluminum:images": "node scripts/generate-aluminum-images.mjs",
+    "catalog:aluminum:sync": "node scripts/sync-aluminum-catalog.mjs",
+    "catalog:flex:sync": "node scripts/sync-flex-catalog.mjs",
+    "catalog:maftoli:sync": "node scripts/sync-maftoli-catalog.mjs",
+    "catalog:industrial:images": "node scripts/generate-industrial-catalog-images.mjs",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },

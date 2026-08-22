@@ -13,12 +13,15 @@ Set both `NEXT_PUBLIC_SITE_URL` and `NEXTAUTH_URL` to the public origin that Ngi
 
 ```text
 Internet → Nginx
-  ├── /uploads/*  → alias /var/www/mahkam-uploads/
-  └── /*          → Docker container :3000 (Next.js)
+  ├── /uploads/*       → alias /var/www/mahkam-uploads/   (disk, long cache)
+  ├── /images/*        → alias …/public/images/ (+ Next fallback)
+  ├── /_next/static/*  → Next :3000 (1y cache)
+  └── /*               → Docker container :3000 (Next.js ISR)
 
 PostgreSQL on the VPS host (not in Compose)
-  ← container via DATABASE_URL …@172.17.0.1:5432/mahkam
 ```
+
+For nginx snippets see `docs/nginx/README.md` (disk-served images are a major speed win).
 
 ## Required environment variables
 
@@ -43,11 +46,37 @@ Production Compose uses **`network_mode: host`** so the app reaches Postgres at 
 DATABASE_URL="postgresql://saharbehbahani:PASSWORD@127.0.0.1:5432/mahkam?schema=public"
 ```
 
+### Fast deploys (preferred)
+
+Do **not** use `docker compose build --no-cache` for normal updates — it rebuilds everything and is very slow.
+
+`docker-compose.yml` sets `build.network: host` so prerender can reach Postgres on `127.0.0.1` during build. Category/catalog loaders also fail soft if DB is briefly unreachable, so the image still builds.
+
+| Change type | What to run |
+|---|---|
+| Tiny code (TS/CSS) | Mac: `./scripts/deploy/mac-rsync.sh` → VPS: `bash scripts/deploy/vps-rebuild.sh` |
+| Empty categories / sticky cache | VPS: `docker compose restart` (often enough) |
+| Catalog products/categories in DB | VPS: `docker exec mahkam-website node scripts/sync-afshan-catalog.mjs` |
+| `.env` secret (not `NEXT_PUBLIC_*`) | Edit `.env` → `docker compose restart` |
+| `NEXT_PUBLIC_*` (GA, site URL) | Must rebuild: `bash scripts/deploy/vps-rebuild.sh` |
+| First install / broken image | Full: `docker compose build --no-cache && docker compose up -d` (rare) |
+
+From your Mac:
+
+```bash
+./scripts/deploy/mac-rsync.sh
+# then SSH and:
+cd /var/www/mahkam-website && bash scripts/deploy/vps-rebuild.sh
+# only when categories/products missing in DB:
+# bash scripts/deploy/vps-rebuild.sh --sync-catalog
+```
+
+### Full rebuild (rare)
+
 ```bash
 cd /var/www/mahkam-website
-# .env must exist here (secrets)
 docker compose down
-docker compose build --no-cache
+docker compose build --no-cache   # only when deps/Node base are broken
 docker compose up -d
 docker exec mahkam-website node scripts/sync-afshan-catalog.mjs
 ```
@@ -111,3 +140,11 @@ See `docs/PRISMA_MIGRATIONS.md`. Never use `prisma migrate reset` or `db seed` o
 ## Seed safety
 
 `npm run db:seed` is blocked in production unless `ALLOW_PRODUCTION_SEED=YES_I_UNDERSTAND` is set.
+
+## Friendly error pages (502 / app errors)
+
+- App UI: `src/app/error.tsx`, `global-error.tsx`, `not-found.tsx`
+- Static Bad Gateway (when Docker/Next is down): `public/errors/offline.html`
+- Nginx: see `docs/nginx/README.md` (`error_page 502 503 504` + `location ^~ /errors/`)
+- Logs: `POST /api/errors` → Admin **خطاها** at `/admin/errors`
+- After deploy: `npx prisma db push` (or schema sync) so `AppErrorLog` exists

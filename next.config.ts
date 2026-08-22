@@ -1,9 +1,19 @@
 import type { NextConfig } from "next";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const flexAliases = require("./prisma/data/prod-flex-aliases.json") as {
+  prodSlug: string;
+  latinSlug: string;
+}[];
 
 const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  // Gzip/Brotli when not terminated by nginx; cheap win for HTML/JSON/JS.
+  compress: true,
+  poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
     // Same-origin `/uploads/*` and `/images/*` work without remotePatterns.
@@ -20,6 +30,15 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
       {
         source: "/images/:path*",
         headers: [
@@ -51,6 +70,13 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+  async redirects() {
+    return flexAliases.map((a) => ({
+      source: `/products/${a.prodSlug}`,
+      destination: `/products/${a.latinSlug}`,
+      permanent: true,
+    }));
   },
 };
 

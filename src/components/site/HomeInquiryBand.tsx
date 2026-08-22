@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Phone, Send } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { formatPhoneFa } from "@/lib/i18n/fa";
+import { getTelegramHandleLabel } from "@/lib/site";
 
 type Props = {
   telegramUrl: string;
@@ -35,7 +36,7 @@ export function HomeInquiryBand({ telegramUrl, phone }: Props) {
                 className="btn-modern inline-flex items-center justify-center gap-2 rounded-full bg-[#229ED9] px-5 py-3 text-sm font-bold text-white hover:bg-[#1b8fc7]"
               >
                 <Send className="size-4" />
-                کانال تلگرام
+                <span dir="ltr">{getTelegramHandleLabel()}</span>
               </a>
               <a
                 href={telHref}

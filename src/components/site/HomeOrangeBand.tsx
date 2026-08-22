@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Leaf } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { LazyImage } from "@/components/ui/LazyImage";
+import { getTelegramHandleLabel } from "@/lib/site";
 
 type Props = {
   telegramUrl: string;
@@ -55,7 +56,7 @@ export function HomeOrangeBand({ telegramUrl }: Props) {
               rel="noopener noreferrer"
               className="btn-modern inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white hover:bg-ink-soft"
             >
-              کانال تلگرام
+              <span dir="ltr">{getTelegramHandleLabel()}</span>
               <ArrowLeft className="size-4 text-copper-light" />
             </a>
             <Link

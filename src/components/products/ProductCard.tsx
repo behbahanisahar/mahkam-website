@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { formatNumberFa } from "@/lib/i18n/fa";
 import { ProductCardLink } from "@/components/products/ProductCardLink";
-import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
+import { catalogCardImageUrl, productCatalogSrc, shouldBypassImageOptimizer } from "@/lib/utils";
+import { canonicalProductSlug } from "@/lib/products/slug";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
@@ -20,34 +21,34 @@ export function ProductCard({
   product: ProductCardData;
   priority?: boolean;
 }) {
-  const img = product.images?.[0];
-  const src = img ? resolveMediaUrl(img.url) : null;
+  const resolved = productCatalogSrc(product);
+  const src = catalogCardImageUrl(resolved) ?? resolved;
   const unoptimized = shouldBypassImageOptimizer(src);
 
   return (
     <ProductCardLink
-      slug={product.slug}
+      slug={canonicalProductSlug(product.slug)}
       className="group card-lift ui-card flex flex-col overflow-hidden"
     >
-      <div className="relative aspect-square bg-bg-alt">
+      <div className="relative aspect-square bg-[#e6e4e0]">
         {src ? (
           priority ? (
             <Image
               src={src}
-              alt={img?.alt ?? product.nameFa}
+              alt={product.images?.[0]?.alt ?? product.nameFa}
               fill
               priority
               unoptimized={unoptimized}
-              className="object-contain p-4 transition duration-500 group-hover:scale-[1.04]"
+              className="object-contain"
               sizes="(max-width:768px) 50vw, 25vw"
             />
           ) : (
             <LazyImage
               src={src}
-              alt={img?.alt ?? product.nameFa}
+              alt={product.images?.[0]?.alt ?? product.nameFa}
               fill
               wrapperClassName="absolute inset-0"
-              className="object-contain p-4 transition duration-500 group-hover:scale-[1.04]"
+              className="object-contain"
               sizes="(max-width:768px) 50vw, 25vw"
             />
           )

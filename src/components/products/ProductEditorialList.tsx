@@ -6,7 +6,8 @@ import type { ProductCardData } from "@/components/products/ProductCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { LazyImage } from "@/components/ui/LazyImage";
 import { formatNumberFa } from "@/lib/i18n/fa";
-import { resolveMediaUrl, shouldBypassImageOptimizer } from "@/lib/utils";
+import { catalogCardImageUrl, productCatalogSrc, shouldBypassImageOptimizer } from "@/lib/utils";
+import { canonicalProductSlug } from "@/lib/products/slug";
 import { LtrAwareText } from "@/components/ui/LtrAwareText";
 
 type Props = {
@@ -46,14 +47,14 @@ export function ProductEditorialList({ title, subtitle, products, emptyMessage }
         ) : (
           <ul className="mt-8 divide-y divide-ink/8 border-y border-ink/8">
             {products.map((product, index) => {
-              const img = product.images?.[0];
-              const src = img ? resolveMediaUrl(img.url) : null;
+              const resolved = productCatalogSrc(product);
+              const src = catalogCardImageUrl(resolved) ?? resolved;
 
               return (
                 <li key={product.slug}>
                   <Reveal delay={Math.min(index, 5) * 40}>
                     <ProductCardLink
-                      slug={product.slug}
+                      slug={canonicalProductSlug(product.slug)}
                       className="group flex items-center gap-3 py-3.5 transition hover:bg-white/60 sm:gap-5 sm:py-4"
                     >
                       <span
@@ -63,25 +64,25 @@ export function ProductEditorialList({ title, subtitle, products, emptyMessage }
                         {formatNumberFa(index + 1).padStart(2, "۰")}
                       </span>
 
-                      <div className="relative size-16 shrink-0 overflow-hidden bg-bg-alt sm:size-20">
+                      <div className="relative size-16 shrink-0 overflow-hidden bg-[#e6e4e0] sm:size-20">
                         {src ? (
                           index < 4 ? (
                             <Image
                               src={src}
-                              alt={img?.alt ?? product.nameFa}
+                              alt={product.images?.[0]?.alt ?? product.nameFa}
                               fill
                               priority={index < 2}
                               unoptimized={shouldBypassImageOptimizer(src)}
-                              className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
+                              className="object-contain"
                               sizes="80px"
                             />
                           ) : (
                             <LazyImage
                               src={src}
-                              alt={img?.alt ?? product.nameFa}
+                              alt={product.images?.[0]?.alt ?? product.nameFa}
                               fill
                               wrapperClassName="absolute inset-0"
-                              className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
+                              className="object-contain"
                               sizes="80px"
                             />
                           )

@@ -10,16 +10,23 @@ export async function GET(req: NextRequest) {
 
   const catalog = await getCatalogPage({ q, category, conductor, page });
 
-  return NextResponse.json({
-    products: catalog.products.map((p) => ({
-      slug: p.slug,
-      nameFa: p.nameFa,
-      shortDesc: p.shortDesc || p.introduction,
-      conductor: p.conductor,
-      images: p.images.map((img) => ({ url: img.url, alt: img.alt })),
-    })),
-    page: catalog.page,
-    totalPages: catalog.totalPages,
-    total: catalog.total,
-  });
+  return NextResponse.json(
+    {
+      products: catalog.products.map((p) => ({
+        slug: p.slug,
+        nameFa: p.nameFa,
+        shortDesc: p.shortDesc || p.introduction,
+        conductor: p.conductor,
+        images: p.images.map((img) => ({ url: img.url, alt: img.alt })),
+      })),
+      page: catalog.page,
+      totalPages: catalog.totalPages,
+      total: catalog.total,
+    },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    },
+  );
 }
