@@ -65,6 +65,8 @@ if [[ "${1:-}" == "--sync-catalog" ]]; then
   docker exec mahkam-website node scripts/sync-flex-catalog.mjs || true
   echo "→ sync-maftoli-catalog"
   docker exec mahkam-website node scripts/sync-maftoli-catalog.mjs || true
+  echo "→ sync-site-phones"
+  docker exec mahkam-website node scripts/sync-site-phones.mjs || true
 else
   echo "tip: pass --sync-catalog to push new imagePath versions into DB"
 fi

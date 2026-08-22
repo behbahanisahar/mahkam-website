@@ -19,8 +19,9 @@ const assetsDir = path.join(
   process.env.HOME || "",
   ".cursor/projects/Users-saharbehbahani-mahkam/assets",
 );
-const CACHE = "card8";
-const FILLER_CACHE = "card11";
+const CACHE = "card13";
+const AFSHAN_EARTH_CACHE = "card13";
+const FILLER_CACHE = "card13";
 const W = 1600;
 const H = 1600;
 const FONT =
@@ -37,6 +38,8 @@ const MODEL_SOURCES = {
   "hd-afshan-black-thick": "hd-afshan-black-thick-v2.png",
   "hd-earth-thin": "hd-earth-thin-v2.png",
   "hd-earth-thick": "hd-earth-thick-v2.png",
+  "hd-earth-afshan-thin": "hd-earth-afshan-thin.png",
+  "hd-earth-afshan-thick": "hd-earth-afshan-thick.png",
   "hd-alum-1": "hd-alum-1.png",
   "hd-alum-2": "hd-alum-2.png",
   "hd-alum-3n": "hd-alum-3n.png",
@@ -133,7 +136,7 @@ function modelFor(product, kind) {
   const size = parseSize(product.sizeLabel);
   const mm = Number(size.section);
 
-  if (earth) return mm >= 16 ? "hd-earth-thick" : "hd-earth-thin";
+  if (earth) return mm >= 16 ? "hd-earth-afshan-thick" : "hd-earth-afshan-thin";
   if (kind === "aluminum") {
     if (size.neutral != null || size.cores === 3) return "hd-alum-3n";
     if (size.cores <= 1) return "hd-alum-1";
@@ -218,7 +221,64 @@ function chipSvg(sizeLabel, voltage, canvas = W) {
 </svg>`);
 }
 
+/** Small specs printed on the cable jacket (navar / sheath). */
+function cablePrintSvg(sizeLabel, voltage, canvas, ink = "#b5b5b5") {
+  const scale = canvas / W;
+  const y = Math.round(1180 * scale);
+  const x = Math.round(520 * scale);
+  const fs = Math.round(22 * scale);
+  const line = `MAHKAM مهکام ${esc(sizeLabel)} mm²  ${esc(voltage)}`;
+  return Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${canvas}" height="${canvas}">
+  <defs><style>${svgFontStyles()}</style></defs>
+  <text class="fa" x="${x}" y="${y}" font-size="${fs}" font-weight="600" fill="${ink}" opacity="0.95"
+        transform="rotate(-8 ${x} ${y})">${line}</text>
+</svg>`);
+}
+
+/** White paper band (navar kaghazi) — same layout as سیم ارت افشان. */
+function paperBandSvg(sizeLabel, voltage, canvas) {
+  const scale = canvas / W;
+  const x = Math.round(430 * scale);
+  const y = Math.round(700 * scale);
+  const bw = Math.round(520 * scale);
+  const bh = Math.round(130 * scale);
+  const logoSlot = Math.round(88 * scale);
+  const tx = x + logoSlot + Math.round(18 * scale);
+  const lx = x + Math.round(14 * scale);
+  const ly = y + Math.round(28 * scale);
+  const ls = Math.round(74 * scale);
+  return Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${canvas}" height="${canvas}">
+  <defs><style>${svgFontStyles()}</style></defs>
+  <rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="${Math.round(6 * scale)}" fill="#ffffff" opacity="0.98"/>
+  <rect x="${x + logoSlot}" y="${y + Math.round(16 * scale)}" width="${Math.round(2 * scale)}" height="${bh - Math.round(32 * scale)}" fill="#e8e8e8"/>
+  <g transform="translate(${lx}, ${ly}) scale(${ls / 100})">
+    <path d="M8 8 L8 92 L28 92 L28 58 L42 78 L58 78 L72 58 L72 92 L92 92 L92 8 L72 8 L50 48 L28 8 Z" fill="#e85d04"/>
+  </g>
+  <text class="fa" x="${tx}" y="${y + Math.round(52 * scale)}" font-size="${Math.round(34 * scale)}" font-weight="700" fill="#e85d04">مهکام</text>
+  <text class="latin" x="${tx}" y="${y + Math.round(88 * scale)}" font-size="${Math.round(28 * scale)}" font-weight="800" fill="#e85d04" letter-spacing="1">MAHKAM</text>
+  <text class="latin" x="${tx}" y="${y + Math.round(118 * scale)}" font-size="${Math.round(20 * scale)}" font-weight="700" fill="#333333">${esc(sizeLabel)} mm² · ${esc(voltage)}</text>
+</svg>`);
+}
+
+function printInkFor(kind, earth) {
+  if (earth) return "#2d2d2d";
+  if (kind === "maftoli") return "#ffffff";
+  return "#b8b8b8";
+}
+
 const STUDIO = { r: 232, g: 229, b: 224, alpha: 1 };
+
+async function resolveModelSrc(model) {
+  const clean = path.join(studioDir, `${model}-clean.png`);
+  try {
+    await access(clean);
+    return clean;
+  } catch {
+    return path.join(studioDir, `${model}.png`);
+  }
+}
 
 async function ensureModels() {
   await mkdir(studioDir, { recursive: true });
@@ -228,6 +288,13 @@ async function ensureModels() {
     const dest = path.join(studioDir, `${key}.png`);
     await access(src);
     await copyFile(src, dest);
+    const cleanSrc = path.join(assetsDir, `${key}-clean.png`);
+    try {
+      await access(cleanSrc);
+      await copyFile(cleanSrc, path.join(studioDir, `${key}-clean.png`));
+    } catch {
+      /* optional clean master */
+    }
   }
 }
 
@@ -236,9 +303,17 @@ const THUMB = 480;
 const CARD_FILL = 0.86;
 const DETAIL_FILL = 0.82;
 
-async function compositeOnStudio(srcPath, size, fill, { sizeLabel, voltage, detailChip = false }) {
+async function compositeOnStudio(
+  srcPath,
+  size,
+  fill,
+  { sizeLabel, voltage, detailChip = false, kind = "afshan", earth = false },
+) {
   const quality = size >= 800 ? 92 : 86;
-  const layers = [];
+  const layers = [
+    { input: cablePrintSvg(sizeLabel, voltage, size, printInkFor(kind, earth)), left: 0, top: 0 },
+    { input: paperBandSvg(sizeLabel, voltage, size), left: 0, top: 0 },
+  ];
   if (detailChip) {
     layers.push({ input: chipSvg(sizeLabel, voltage, size), left: 0, top: 0 });
   }
@@ -250,27 +325,31 @@ async function compositeOnStudio(srcPath, size, fill, { sizeLabel, voltage, deta
 
 async function renderOne(product, kind, modelOverride) {
   const model = modelOverride || modelFor(product, kind);
-  const src = path.join(studioDir, `${model}.png`);
+  const src = await resolveModelSrc(model);
   await access(src);
   const voltage = voltageFor(kind, product);
-  const opts = { sizeLabel: product.sizeLabel, voltage };
+  const blob = productBlob(product);
+  const earth =
+    Boolean(product.isEarth) || /سبز و زرد|سبز\/زرد|Green-Yellow|Green\/Yellow/i.test(blob);
+  const overlay = { sizeLabel: product.sizeLabel, voltage, kind, earth };
   await (
-    await compositeOnStudio(src, W, DETAIL_FILL, { ...opts, detailChip: true })
+    await compositeOnStudio(src, W, DETAIL_FILL, { ...overlay, detailChip: true })
   ).toFile(path.join(outDir, `${product.slug}.webp`));
-  await (await compositeOnStudio(src, THUMB, CARD_FILL, opts)).toFile(
+  await (await compositeOnStudio(src, THUMB, CARD_FILL, overlay)).toFile(
     path.join(thumbDir, `${product.slug}.webp`),
   );
   return model;
 }
 
-async function loadAndBump(file, cache = CACHE) {
+async function loadAndBump(file, cache = CACHE, filterFn) {
   const full = path.join(root, file);
   const data = JSON.parse(await readFile(full, "utf8"));
   for (const p of data) {
+    if (filterFn && !filterFn(p)) continue;
     p.imagePath = `/images/catalog/${p.slug}.webp?v=${cache}`;
   }
   await writeFile(full, `${JSON.stringify(data, null, 2)}\n`, "utf8");
-  return data;
+  return filterFn ? data.filter(filterFn) : data;
 }
 
 async function rebuildThumbsFromCatalog() {
@@ -299,7 +378,24 @@ async function main() {
   const extrasOnly = process.argv.includes("--extras-only");
   const flexOnly = process.argv.includes("--flex-only");
   const fillerOnly = process.argv.includes("--filler-only");
+  const earthOnly = process.argv.includes("--earth-only");
   const maftoliOnly = process.argv.includes("--maftoli-only");
+  const isEarthProduct = (p) =>
+    Boolean(p.isEarth) || /^sim-afshan-earth-/.test(p.slug);
+  if (earthOnly) {
+    const earth = await loadAndBump(
+      "prisma/data/afshan-catalog.json",
+      AFSHAN_EARTH_CACHE,
+      isEarthProduct,
+    );
+    console.log(`→ afshan earth ${earth.length} (v=${AFSHAN_EARTH_CACHE})`);
+    for (const p of earth) {
+      const model = await renderOne(p, "afshan");
+      console.log(`  earth ${p.slug}  ${p.sizeLabel}  ${model}`);
+    }
+    console.log(`✓ afshan earth catalog ready v=${AFSHAN_EARTH_CACHE}`);
+    return;
+  }
   if (fillerOnly) {
     const filler = await loadAndBump("prisma/data/flex-filler-catalog.json", FILLER_CACHE);
     console.log(`→ filled flex copper ${filler.length} (v=${FILLER_CACHE})`);
