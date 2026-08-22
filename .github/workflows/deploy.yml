@@ -59,15 +59,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            docker compose down
-            docker compose build --no-cache
-            docker compose up -d
-
-            echo "Waiting for container..."
-            sleep 8
-
-            echo "Syncing افشان catalog..."
-            docker exec mahkam-website node scripts/sync-afshan-catalog.mjs || echo "WARN: catalog sync failed — check DATABASE_URL / pg_hba"
+            bash scripts/deploy/vps-rebuild.sh --sync-catalog
 
             docker ps
             echo "Deployment completed."
