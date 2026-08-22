@@ -20,7 +20,7 @@ const assetsDir = path.join(
   ".cursor/projects/Users-saharbehbahani-mahkam/assets",
 );
 const CACHE = "card8";
-const FILLER_CACHE = "card10";
+const FILLER_CACHE = "card11";
 const W = 1600;
 const H = 1600;
 const FONT =
